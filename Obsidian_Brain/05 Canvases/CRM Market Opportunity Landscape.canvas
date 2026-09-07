@@ -1,0 +1,66 @@
+{
+  "nodes": [
+    {
+      "id": "n1",
+      "x": -600,
+      "y": -100,
+      "width": 300,
+      "height": 180,
+      "type": "text",
+      "text": "## \ud83d\udd34 Orbit 0: Behemoth\n**Salesforce**\n*Pain: $300/mo, complex setup, enterprise bloat*"
+    },
+    {
+      "id": "n2",
+      "x": -200,
+      "y": -100,
+      "width": 300,
+      "height": 180,
+      "type": "text",
+      "text": "## \ud83d\udfe1 Orbit 1: Challenger\n**Pipedrive / HubSpot**\n*Pain: Price jumps, lacks native WhatsApp voice sync*"
+    },
+    {
+      "id": "n3",
+      "x": 200,
+      "y": -250,
+      "width": 350,
+      "height": 200,
+      "type": "text",
+      "text": "## \ud83d\udfe2 Opportunity 1 (Unbundler)\n**[[Opp - Flat-Rate Linear-Style CRM for Dev Agencies]]**\n*Score: 9.2 | Effort: 2/5*"
+    },
+    {
+      "id": "n4",
+      "x": 200,
+      "y": 50,
+      "width": 350,
+      "height": 200,
+      "type": "text",
+      "text": "## \ud83d\udfe2 Opportunity 2 (Satellite Bridge)\n**[[Opp - WhatsApp Audio & Deal Bridge for Pipedrive]]**\n*Score: 8.8 | Effort: 1/5*"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "fromNode": "n1",
+      "fromSide": "right",
+      "toNode": "n2",
+      "toSide": "left",
+      "label": "Challenged by"
+    },
+    {
+      "id": "e2",
+      "fromNode": "n1",
+      "fromSide": "top",
+      "toNode": "n3",
+      "toSide": "left",
+      "label": "Direct Unbundle"
+    },
+    {
+      "id": "e3",
+      "fromNode": "n2",
+      "fromSide": "right",
+      "toNode": "n4",
+      "toSide": "left",
+      "label": "Symbiotic Orbit"
+    }
+  ]
+}

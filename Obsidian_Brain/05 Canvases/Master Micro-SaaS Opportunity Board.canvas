@@ -1,0 +1,149 @@
+{
+  "nodes": [
+    {
+      "id": "cat_crm",
+      "x": -900,
+      "y": -350,
+      "width": 260,
+      "height": 100,
+      "type": "text",
+      "text": "# 📂 Category: CRM\n`1,920 Categories Synced`"
+    },
+    {
+      "id": "p_salesforce",
+      "x": -900,
+      "y": -200,
+      "width": 260,
+      "height": 130,
+      "type": "text",
+      "text": "## 🔴 Salesforce (Orbit 0)\n*Flaw: $300/mo, consultant bloat, slow UI*"
+    },
+    {
+      "id": "p_pipedrive",
+      "x": -900,
+      "y": -30,
+      "width": 260,
+      "height": 130,
+      "type": "text",
+      "text": "## 🟡 Pipedrive (Orbit 1)\n*Flaw: Missing mobile WhatsApp voice note logging*"
+    },
+    {
+      "id": "opp_linear_crm",
+      "x": -580,
+      "y": -200,
+      "width": 320,
+      "height": 180,
+      "type": "text",
+      "text": "## 🚀 Opp: Linear-Style CRM\n**OSI Score**: ⭐ 9.2 / 10\n**ICP**: Dev & Design Agencies\n**Playbook**: The Unbundler\n**Model**: $49/mo Flat Unlimited"
+    },
+    {
+      "id": "opp_whatsapp_crm",
+      "x": -580,
+      "y": 10,
+      "width": 320,
+      "height": 180,
+      "type": "text",
+      "text": "## 🚀 Opp: WhatsApp Voice Bridge\n**OSI Score**: ⭐ 8.8 / 10\n**ICP**: Real Estate Brokers\n**Playbook**: The Bridge & Sync\n**Model**: $29/mo Chrome Extension"
+    },
+
+    {
+      "id": "cat_acc",
+      "x": -200,
+      "y": -350,
+      "width": 260,
+      "height": 100,
+      "type": "text",
+      "text": "# 📂 Category: Accounting\n`General Ledger & Invoicing`"
+    },
+    {
+      "id": "p_qbo",
+      "x": -200,
+      "y": -200,
+      "width": 260,
+      "height": 130,
+      "type": "text",
+      "text": "## 🔴 QuickBooks (Orbit 0)\n*Flaw: Price creep, data lock-in, invasive AI*"
+    },
+    {
+      "id": "p_freshbooks",
+      "x": -200,
+      "y": -30,
+      "width": 260,
+      "height": 130,
+      "type": "text",
+      "text": "## 🟡 FreshBooks & Xero (Orbit 1)\n*Flaw: Client caps, data hostage on pause*"
+    },
+    {
+      "id": "opp_ledgervault",
+      "x": 120,
+      "y": -200,
+      "width": 320,
+      "height": 180,
+      "type": "text",
+      "text": "## 🚀 Opp: LedgerVault (Top Pick)\n**OSI Score**: ⭐ 9.4 / 10\n**ICP**: Freelance Designers\n**Playbook**: The Unbundler\n**Model**: $19/mo with Lifetime PDF Archive"
+    },
+    {
+      "id": "opp_stripesheet",
+      "x": 120,
+      "y": 10,
+      "width": 320,
+      "height": 180,
+      "type": "text",
+      "text": "## 🚀 Opp: StripeSheet Pro\n**OSI Score**: ⭐ 8.7 / 10\n**ICP**: SaaS Finance Leads\n**Playbook**: The Symbiotic Satellite\n**Model**: $49/mo Xero/Stripe Bridge"
+    },
+
+    {
+      "id": "cat_helpdesk",
+      "x": 500,
+      "y": -350,
+      "width": 260,
+      "height": 100,
+      "type": "text",
+      "text": "# 📂 Category: Help Desk\n`Support, Inboxes, Live Chat`"
+    },
+    {
+      "id": "p_zendesk",
+      "x": 500,
+      "y": -200,
+      "width": 260,
+      "height": 130,
+      "type": "text",
+      "text": "## 🔴 Zendesk (Orbit 0)\n*Flaw: $60+/seat tax, complex enterprise gates*"
+    },
+    {
+      "id": "p_freshdesk",
+      "x": 500,
+      "y": -30,
+      "width": 260,
+      "height": 130,
+      "type": "text",
+      "text": "## 🟡 Freshdesk & Gorgias (Orbit 1)\n*Flaw: UI lag, ticket volume surcharges*"
+    },
+    {
+      "id": "opp_leandesk",
+      "x": 820,
+      "y": -200,
+      "width": 320,
+      "height": 180,
+      "type": "text",
+      "text": "## 🚀 Opp: LeanDesk Flat-Rate\n**OSI Score**: ⭐ 9.1 / 10\n**ICP**: Bootstrapped SaaS Teams\n**Playbook**: Pricing Arbitrage\n**Model**: $49/mo Flat Unlimited Inbox"
+    },
+    {
+      "id": "opp_nanodesk",
+      "x": 820,
+      "y": 10,
+      "width": 320,
+      "height": 180,
+      "type": "text",
+      "text": "## 🚀 Opp: NanoDesk for Shopify\n**OSI Score**: ⭐ 8.7 / 10\n**ICP**: Shopify DTC Store Owners\n**Playbook**: The Vertical Specialist\n**Model**: $29/mo Sub-100ms Fast Inbox"
+    }
+  ],
+  "edges": [
+    {"id": "e1", "fromNode": "p_salesforce", "fromSide": "right", "toNode": "opp_linear_crm", "toSide": "left", "label": "Unbundles"},
+    {"id": "e2", "fromNode": "p_pipedrive", "fromSide": "right", "toNode": "opp_whatsapp_crm", "toSide": "left", "label": "Orbits"},
+    {"id": "e3", "fromNode": "p_qbo", "fromSide": "right", "toNode": "opp_ledgervault", "toSide": "left", "label": "Solves Lock-in"},
+    {"id": "e4", "fromNode": "p_freshbooks", "fromSide": "right", "toNode": "opp_stripesheet", "toSide": "left", "label": "Bridges"},
+    {"id": "e5", "fromNode": "p_zendesk", "fromSide": "right", "toNode": "opp_leandesk", "toSide": "left", "label": "Flat Pricing"},
+    {"id": "e6", "fromNode": "p_freshdesk", "fromSide": "right", "toNode": "opp_nanodesk", "toSide": "left", "label": "Shopify Niche"}
+  ]
+}

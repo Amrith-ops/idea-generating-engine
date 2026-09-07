@@ -1,0 +1,94 @@
+flowchart TB
+    %% =========================================================================
+    %% MASTER CONSOLIDATED ARCHITECTURE & DATA FLOW
+    %% G2 Micro-SaaS Disruption Discovery Engine
+    %% =========================================================================
+
+    subgraph S0 ["PHASE 0: User Trigger and Category Ingestion"]
+        USER["Founder / User Input<br/>• Selects Category (e.g. Accounting, CRM, Help Desk)"]
+        IMPORT["pipeline/import_all_g2_categories.py<br/>• Parses 1,887 pure software categories<br/>• Filters out 11 services sectors"]
+        USER --> IMPORT
+    end
+
+    subgraph S1 ["PHASE 1: Autonomous Web Crawling and Orbital Mapping"]
+        HARVEST["pipeline/live_review_harvester.py<br/>• Discovers category products and tier hierarchy<br/>• Scrapes 1 to 3 star negative reviews and complaints"]
+        
+        O0["Orbit 0: The Incumbent Sun (Red Dot)<br/>Legacy Behemoths (Salesforce, QuickBooks, Zendesk)<br/>High pricing creep, bloated features, slow support"]
+        O1["Orbit 1: Challengers (Yellow Dot)<br/>Mid-Market Tools (HubSpot, FreshBooks, Freshdesk)<br/>Tier paywalls, rigid seat and client limits"]
+        O2["Orbit 2: Micro-SaaS Satellites (Green Dot)<br/>Unbundled Specialist Tools<br/>Flat-fee billing, single-job speed, zero-bloat UX"]
+
+        WEB_SERP["Search Engines and Live Web<br/>(G2, Capterra, Reddit r/SaaS)"]
+        
+        HARVEST -->|Searches Market Leaders and Challengers| WEB_SERP
+        WEB_SERP -->|Returns Competitors and Raw Reviews| HARVEST
+        HARVEST -->|Classifies Behemoths| O0
+        HARVEST -->|Classifies Challengers| O1
+    end
+
+    subgraph S2 ["PHASE 2: Gemini AI Disruption Synthesis"]
+        GEMINI["Google Gemini Flash AI (gemini-3-flash)<br/>• Identifies critical customer pain vectors<br/>• Synthesizes unbundled Micro-SaaS opportunities<br/>• Computes OSI Score, Dev Timeline and MRR"]
+        HARVEST -->|Raw Reviews and Dislikes| GEMINI
+        GEMINI -->|Synthesizes Unbundling Satellites| O2
+    end
+
+    subgraph S3 ["PHASE 3: Live Google SEO and Corpus Validation"]
+        ANALYZER["pipeline/keyword_volume_analyzer.py<br/>• Live Google Autocomplete HTTP requests<br/>• PostgreSQL review corpus N-gram frequency extraction<br/>• Algorithmic search volume and intent CPC scoring"]
+        
+        GOOG_API["Google Autocomplete API<br/>(suggestqueries.google.com)"]
+        ANALYZER -->|Queries Product alternative and pricing| GOOG_API
+        GOOG_API -->|Returns Live Query Stream and Relevance| ANALYZER
+    end
+
+    subgraph DB ["PERSISTENCE LAYER: Supabase PostgreSQL (Local Docker)"]
+        T_CAT[("g2_categories")]
+        T_PROD[("g2_products (Orbit 0 and Orbit 1)")]
+        T_REV[("g2_reviews (Real Dislike Quotes)")]
+        T_PAIN[("pain_clusters (Severity Scores)")]
+        T_OPP[("microsaas_opportunities (Orbit 2 Satellites)")]
+        T_KW[("category_keyword_analytics (Google Volume and CPC)")]
+    end
+
+    subgraph S4 ["PHASE 4: Knowledge Vault and Interactive Dashboard"]
+        EXPORTER["pipeline/obsidian_exporter.py<br/>• Generates bi-directionally linked Markdown dossiers"]
+        VAULT["Obsidian_Brain/<br/>• 00 Meta (Methodology and Keywords)<br/>• 01 Software Sectors<br/>• 02 Micro-SaaS Opportunities"]
+        
+        SERVER["dashboard/app.py (FastAPI Backend Server)"]
+        
+        UI_ORBIT["View 1: Orbital Universe<br/>Live canvas with revolving Red, Yellow, Green nodes"]
+        UI_GRID["View 2: Opportunity Grid<br/>Filterable by OSI score, MRR target and dev complexity"]
+        UI_KW["View 3: Search Volume and Demand<br/>Live Google search volume, YoY growth and CPC"]
+        UI_MODAL["View 4: Evidence Modal<br/>Click any card to see real verbatim customer quotes"]
+    end
+
+    %% Pipeline Interconnection Edges
+    IMPORT -->|Inserts Sectors and Subcategories| T_CAT
+    IMPORT -->|Triggers Harvester| HARVEST
+    HARVEST -->|Inserts Products| T_PROD
+    HARVEST -->|Inserts Raw Dislikes| T_REV
+    GEMINI -->|Inserts Pain Severity| T_PAIN
+    GEMINI -->|Inserts Micro-SaaS Satellites| T_OPP
+    
+    T_REV -->|Feeds Dislike Text for N-Gram Mining| ANALYZER
+    ANALYZER -->|Inserts Live Search Demand and CPC| T_KW
+
+    T_CAT --> EXPORTER
+    T_PROD --> EXPORTER
+    T_REV --> EXPORTER
+    T_PAIN --> EXPORTER
+    T_OPP --> EXPORTER
+    T_KW --> EXPORTER
+    EXPORTER -->|Writes Markdown Files| VAULT
+
+    T_PROD --> SERVER
+    T_OPP --> SERVER
+    T_PAIN --> SERVER
+    T_KW --> SERVER
+    T_REV --> SERVER
+
+    SERVER -->|/api/orbit| UI_ORBIT
+    SERVER -->|/api/opportunities| UI_GRID
+    SERVER -->|/api/keywords| UI_KW
+    SERVER -->|/api/evidence| UI_MODAL
+
+    O2 -.->|Disrupts Vulnerabilities of| O0
+    O2 -.->|Disrupts Vulnerabilities of| O1

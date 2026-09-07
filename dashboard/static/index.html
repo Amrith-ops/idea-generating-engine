@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G2 Micro-SaaS AI Brain | Discovery Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- TOP HEADER -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="logo-badge">🚀</div>
+        <div>
+          <h1>G2 Micro-SaaS <span class="gradient-text">AI Brain</span></h1>
+          <p class="subtitle">Autonomous G2 Negative Review Mining & Opportunity Command Center</p>
+        </div>
+      </div>
+      <div class="status-pills">
+        <div class="pill glow-cyan"><span class="dot"></span> Supabase Connected</div>
+        <div class="pill glow-emerald"><span class="dot"></span> Gemini 3.0 Active</div>
+        <div class="pill glow-purple"><span class="dot"></span> 1,887 Categories Synced</div>
+      </div>
+    </header>
+
+    <!-- METRICS OVERVIEW -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-title">TOTAL G2 CATEGORIES</div>
+        <div class="metric-value" id="stat-categories">1,887</div>
+        <div class="metric-sub">Across 33 Macro Sectors</div>
+      </div>
+      <div class="metric-card glow-cyan">
+        <div class="metric-title">COMPETITORS ANALYZED</div>
+        <div class="metric-value" id="stat-products">12</div>
+        <div class="metric-sub">Orbit 0 Behemoths & Orbit 1 Challengers</div>
+      </div>
+      <div class="metric-card glow-purple">
+        <div class="metric-title">LIVE REVIEWS HARVESTED</div>
+        <div class="metric-value" id="stat-reviews">46</div>
+        <div class="metric-sub">Small-Business & Mid-Market Filtered</div>
+      </div>
+      <div class="metric-card glow-emerald highlight">
+        <div class="metric-title">VALIDATED MICRO-SAAS IDEAS</div>
+        <div class="metric-value" id="stat-opportunities">18</div>
+        <div class="metric-sub">Average OSI: 9.2 / 10.0</div>
+      </div>
+    </section>
+
+    <!-- HIERARCHICAL AI HARVESTER & MINER -->
+    <section class="miner-section">
+      <div class="miner-card">
+        <div class="miner-header-row">
+          <div class="miner-left">
+            <h3>⚡ Live Autonomous Review Harvester</h3>
+            <p>Crawl live competitor negative reviews, mine unbundling vectors with Gemini AI, and discover live Google search demand.</p>
+          </div>
+          <!-- HARVESTER MODE SELECTOR -->
+          <div class="harvester-mode-toggle">
+            <button class="mode-btn active" id="btn-mode-sub" onclick="setHarvesterMode('subcategory')">
+              🎯 1. Specific Sub-Category
+            </button>
+            <button class="mode-btn" id="btn-mode-root" onclick="setHarvesterMode('root_sector')">
+              🌳 2. Root Sector Batch Scan
+            </button>
+          </div>
+        </div>
+
+        <div class="miner-controls-grid">
+          <!-- ROOT SECTOR SELECT -->
+          <div class="control-group">
+            <label class="control-label">Root Sector (Macro Domain)</label>
+            <select id="harvester-root-select" class="custom-select" onchange="onHarvesterRootChange(this.value)">
+              <option value="">Loading Root Sectors...</option>
+            </select>
+          </div>
+
+          <!-- SUBCATEGORY SELECT -->
+          <div class="control-group" id="subcat-control-group">
+            <label class="control-label" id="subcat-label">Sub-Category</label>
+            <select id="harvester-sub-select" class="custom-select" onchange="onHarvesterSubChange(this.value)">
+              <option value="">Select Sub-Category...</option>
+            </select>
+          </div>
+
+          <!-- ACTION BUTTON -->
+          <div class="control-group button-group">
+            <label class="control-label" style="opacity:0;">Action</label>
+            <button id="btn-mine" class="btn-primary btn-block" onclick="triggerMine()">
+              <span id="btn-text">⛏️ Run AI Harvester</span>
+              <div id="btn-spinner" class="spinner hidden"></div>
+            </button>
+          </div>
+        </div>
+
+        <div id="miner-status" class="miner-status hidden"></div>
+      </div>
+    </section>
+
+    <!-- VIEW SWITCHER NAVIGATION TABS -->
+    <nav class="view-nav-bar">
+      <div class="view-tabs">
+        <button class="view-tab-btn active" id="tab-btn-orbit" onclick="switchMainView('orbit')">
+          <span class="tab-icon">🪐</span>
+          <span class="tab-label">Orbital Universe View</span>
+          <span class="tab-badge">Interactive</span>
+        </button>
+        <button class="view-tab-btn" id="tab-btn-grid" onclick="switchMainView('grid')">
+          <span class="tab-icon">🚀</span>
+          <span class="tab-label">Opportunity Grid</span>
+          <span class="tab-badge" id="grid-count-badge">18 Ideas</span>
+        </button>
+        <button class="view-tab-btn" id="tab-btn-keywords" onclick="switchMainView('keywords')">
+          <span class="tab-icon">📊</span>
+          <span class="tab-label">Search Volume & Keyword Demand</span>
+          <span class="tab-badge" style="background:rgba(16,185,129,0.2); color:var(--emerald-glow); border-color:rgba(16,185,129,0.4);">Demand Verified</span>
+        </button>
+      </div>
+      <div class="view-nav-stats">
+        <span class="live-dot"></span>
+        <span>Satellite Orbit Engine Active</span>
+      </div>
+    </nav>
+
+    <!-- 1. ORBITAL UNIVERSE VIEW (REVOLVING SATELLITE ENGINE) -->
+    <section id="orbit-view-section" class="orbit-view-section">
+      <!-- HIERARCHICAL CATEGORY SELECTION BAR -->
+      <div class="category-selector-card">
+        <div class="category-selector-header">
+          <div class="cat-sel-title">
+            <span class="icon">🌌</span>
+            <div>
+              <h3>Macro Sector & Sub-Category Gravity System</h3>
+              <p>Select a <b>Root Sector</b> (e.g. <i>Customer Service</i>) and pick any <b>Sub-Category</b> (e.g. <i>Help Desk Software</i>) to load its Orbit 0 Goliath, Orbit 1 Challengers, and Orbit 2 Micro-SaaS Satellites.</p>
+            </div>
+          </div>
+          <div class="cat-header-actions">
+            <button class="btn-secondary" onclick="openHierarchyModal()">
+              📂 Browse All 33 Root Sectors & 1,887 Categories &rarr;
+            </button>
+            <div class="cat-quick-search">
+              <input type="text" id="orbit-category-search" placeholder="Search 1,887 categories..." list="orbit-cat-datalist" onchange="onCategorySearchSelect(this.value)">
+              <datalist id="orbit-cat-datalist"></datalist>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ROOT SECTORS BAR -->
+        <div class="root-sector-tabs-row" id="root-sector-tabs">
+          <!-- Populated by JS -->
+          <button class="root-tab active">Loading Root Sectors...</button>
+        </div>
+
+        <!-- SUBCATEGORIES PILLS ROW -->
+        <div class="subcat-pills-container">
+          <div class="subcat-header">
+            <span class="subcat-title" id="active-root-title">Sub-Categories in Customer Service:</span>
+            <span class="subcat-count" id="active-subcat-count">32 Available</span>
+          </div>
+          <div class="category-pills-row" id="active-subcat-pills">
+            <!-- Populated by JS -->
+            <button class="cat-pill active">Loading Subcategories...</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORBIT COSMIC STAGE & TELEMETRY HUD -->
+      <div class="orbit-layout-container">
+        <!-- THE ORBIT STAGE -->
+        <div class="orbit-stage-wrapper">
+          <div class="orbit-stage-toolbar">
+            <div class="system-meta-badge">
+              <span class="dot-system"></span>
+              <span id="orbit-system-title">Customer Service / Help Desk Software Gravity Well</span>
+            </div>
+            <div class="orbit-controls">
+              <button class="control-btn" id="btn-toggle-spin" onclick="toggleOrbitSpin()" title="Pause/Play Rotation">
+                <span id="spin-icon">⏸️</span> Pause Orbit
+              </button>
+              <div class="speed-selector">
+                <button class="speed-btn" onclick="setOrbitSpeed(0.5)">0.5x</button>
+                <button class="speed-btn active" onclick="setOrbitSpeed(1)">1x</button>
+                <button class="speed-btn" onclick="setOrbitSpeed(2)">2x Fast</button>
+              </div>
+              <button class="control-btn" id="btn-toggle-lasers" onclick="toggleLasers()">
+                ⚡ Lasers: ON
+              </button>
+            </div>
+          </div>
+
+          <!-- HTML5 Canvas Orbit Simulation -->
+          <canvas id="orbit-canvas" width="850" height="600"></canvas>
+          
+          <div class="orbit-legend">
+            <div class="legend-item"><span class="legend-dot red"></span> <b>Orbit 0:</b> Goliath Incumbent (Sun)</div>
+            <div class="legend-item"><span class="legend-dot yellow"></span> <b>Orbit 1:</b> Challengers (Planets)</div>
+            <div class="legend-item"><span class="legend-dot green"></span> <b>Orbit 2:</b> Micro-SaaS Satellites (Moons)</div>
+          </div>
+        </div>
+
+        <!-- RIGHT TELEMETRY HUD -->
+        <div class="orbit-telemetry-panel">
+          <div class="hud-card">
+            <div class="hud-header">
+              <h4>🎯 Under-Attack Competitors</h4>
+              <span class="hud-badge" id="hud-competitor-count">3 Tracked</span>
+            </div>
+            <div id="hud-competitors-list" class="hud-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <div class="hud-card">
+            <div class="hud-header">
+              <h4>🔥 Top Discontent Pain Vectors</h4>
+              <span class="hud-badge red">Mined from G2</span>
+            </div>
+            <div id="hud-pain-list" class="hud-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <div class="hud-card highlight-card">
+            <div class="hud-header">
+              <h4>🛰️ Orbit 2 Micro-SaaS Satellites</h4>
+              <span class="hud-badge green" id="hud-satellite-count">4 Satellites</span>
+            </div>
+            <div id="hud-satellites-list" class="hud-satellites-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM DISRUPTION & DEMAND PULSE DECK (UTILIZING BOTTOM SPACE CLEANLY) -->
+      <div class="category-bottom-pulse-deck">
+        <div class="pulse-card">
+          <div class="pulse-header">
+            <div class="pulse-title-group">
+              <span class="pulse-icon">⚡</span>
+              <div>
+                <h4>Direct Disruption Vector & Attack Mapping</h4>
+                <p>Which Orbit 2 Micro-SaaS Satellites are built to capture unhappy users from each incumbent.</p>
+              </div>
+            </div>
+            <span class="pulse-tag">Active Playbook</span>
+          </div>
+          <div id="pulse-attack-mapping" class="pulse-attack-grid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <div class="pulse-card">
+          <div class="pulse-header">
+            <div class="pulse-title-group">
+              <span class="pulse-icon">📈</span>
+              <div>
+                <h4>Live Category Search Arbitrage & Buyer Demand</h4>
+                <p>Top real-time search queries signaling buyer churn in this category.</p>
+              </div>
+            </div>
+            <span class="pulse-tag green">High Buyer Intent</span>
+          </div>
+          <div id="pulse-keywords-preview" class="pulse-keywords-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. OPPORTUNITY GRID VIEW -->
+    <section id="grid-view-section" class="grid-view-section hidden">
+      <!-- OPPORTUNITY FILTERS -->
+      <div class="grid-toolbar">
+        <div class="filter-group">
+          <span class="filter-label">Filter by Sector:</span>
+          <select id="grid-sector-filter" class="filter-select" onchange="filterOpportunitiesBySector(this.value)">
+            <option value="all">All Sectors & Categories</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Opportunity Type:</span>
+          <div class="filter-pills">
+            <button class="filter-pill active" onclick="filterOpportunities('all', this)">All Opportunities</button>
+            <button class="filter-pill" onclick="filterOpportunities('Unbundler', this)">⚡ Unbundlers</button>
+            <button class="filter-pill" onclick="filterOpportunities('Anti-Bloat', this)">🛡️ Anti-Bloat</button>
+            <button class="filter-pill" onclick="filterOpportunities('Pricing Arbitrage', this)">💰 Pricing Arbitrage</button>
+            <button class="filter-pill" onclick="filterOpportunities('Specialist Vertical', this)">🎯 Vertical Specialists</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPPORTUNITIES CONTAINER -->
+      <div class="opportunities-grid" id="opportunities-container">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- 3. SEARCH VOLUME & KEYWORD DEMAND VIEW -->
+    <section id="keyword-view-section" class="keyword-view-section hidden">
+      <div class="keyword-header-card">
+        <div class="kw-header-info">
+          <h3>📊 Live Google SEO Demand & Keyword Arbitrage</h3>
+          <p>Real-time search queries discovered via <b>Google Autocomplete API</b> + <b>PostgreSQL Review Corpus N-Gram Mining</b>.</p>
+        </div>
+        <div class="kw-stat-badges">
+          <div class="kw-badge"><span class="num" id="kw-total-count">73</span> Keywords Analyzed</div>
+          <div class="kw-badge green"><span class="num">Live</span> Google API Stream</div>
+        </div>
+      </div>
+
+      <div class="keyword-tables-grid">
+        <!-- TABLE 1: HIGHEST VOLUME SEARCHES -->
+        <div class="kw-card">
+          <div class="kw-card-header">
+            <h4>🔥 Highest Volume Incumbent Churn Keywords</h4>
+            <span class="badge-tag">High Search Demand</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Live Google Search Query</th>
+                  <th>Monthly Volume</th>
+                  <th>YoY Growth</th>
+                  <th>Est. CPC</th>
+                  <th>Intent</th>
+                </tr>
+              </thead>
+              <tbody id="table-highest-volume">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TABLE 2: FASTEST GROWING BREAKOUT QUERIES -->
+        <div class="kw-card">
+          <div class="kw-card-header">
+            <h4>🚀 Fastest Growing Breakout Queries (YoY > 150%)</h4>
+            <span class="badge-tag green">High Velocity</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Breakout Search Query</th>
+                  <th>YoY Growth</th>
+                  <th>Monthly Volume</th>
+                  <th>Est. CPC</th>
+                  <th>Disruption Playbook</th>
+                </tr>
+              </thead>
+              <tbody id="table-fastest-growing">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL OVERLAY: OPPORTUNITY DOSSIER -->
+    <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <div id="modal-content">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL OVERLAY: COMPETITOR INTELLIGENCE DOSSIER -->
+    <div id="competitor-modal-overlay" class="modal-overlay hidden" onclick="closeCompetitorModal(event)">
+      <div class="modal-card competitor-dossier-card" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeCompetitorModal()">&times;</button>
+        <div id="competitor-modal-content">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL OVERLAY: PAIN CLUSTER DOSSIER -->
+    <div id="pain-modal-overlay" class="modal-overlay hidden" onclick="closePainModal(event)">
+      <div class="modal-card pain-dossier-card" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closePainModal()">&times;</button>
+        <div id="pain-modal-content">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL OVERLAY: REVIEW EVIDENCE -->
+    <div id="evidence-modal-overlay" class="modal-overlay hidden" onclick="closeEvidenceModal(event)">
+      <div class="modal-card evidence-card" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeEvidenceModal()">&times;</button>
+        <div class="modal-header-evidence">
+          <h3 id="evidence-modal-title">🛡️ Raw Scraped Review Citations</h3>
+          <p id="evidence-modal-subtitle">Verbatim customer quotes mined from G2 and Capterra supporting this disruption vector.</p>
+        </div>
+        <div id="evidence-reviews-container" class="evidence-reviews-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL OVERLAY: COMPLETE 33 SECTORS HIERARCHY DIRECTORY -->
+    <div id="hierarchy-modal-overlay" class="modal-overlay hidden" onclick="closeHierarchyModal(event)">
+      <div class="modal-card hierarchy-modal-card" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeHierarchyModal()">&times;</button>
+        <div class="modal-header-evidence">
+          <h3>📂 Complete Macro Sectors & Subcategories Directory</h3>
+          <p>Browse all 33 Root Macro Domains and their 1,887 Sub-Categories. Click any category to explore its orbit or run AI harvesting.</p>
+        </div>
+        <div class="hierarchy-search-bar">
+          <input type="text" id="hierarchy-filter-input" placeholder="Filter categories (e.g. Customer Service, Help Desk, CRM, Accounting)..." oninput="filterHierarchyModal(this.value)">
+        </div>
+        <div id="hierarchy-tree-container" class="hierarchy-tree-container">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
