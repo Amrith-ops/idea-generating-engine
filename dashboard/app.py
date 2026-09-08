@@ -449,6 +449,71 @@ def get_keywords(category_slug: Optional[str] = None):
         "most_relevant": most_relevant
     }
 
+@app.get("/api/clusters")
+def get_competitor_clusters(category_slug: Optional[str] = None):
+    """
+    Returns strategic competitor clusters with their member products,
+    feature profiles, common pain points, and unaddressed gaps.
+    """
+    clusters = db.get_competitor_clusters(category_slug)
+    # If no clusters exist yet for this category, auto-generate them
+    if not clusters and category_slug:
+        from pipeline.competitor_clustering_engine import CompetitorClusterEngine
+        c_engine = CompetitorClusterEngine(db=db)
+        c_engine.cluster_products(category_slug)
+        clusters = db.get_competitor_clusters(category_slug)
+
+    # Enrich each cluster with product objects
+    for cl in clusters:
+        prod_slugs = cl.get("product_slugs") or []
+        if prod_slugs:
+            sql = "SELECT * FROM g2_products WHERE slug = ANY(%s)"
+            cl["products"] = db.fetch_all(sql, (prod_slugs,))
+            for p in cl["products"]:
+                if isinstance(p.get("features"), str):
+                    try:
+                        p["features"] = json.loads(p["features"])
+                    except Exception:
+                        p["features"] = []
+        else:
+            cl["products"] = []
+
+    return clusters
+
+@app.get("/api/whitespace")
+def get_whitespace_opportunities(category_slug: Optional[str] = None):
+    """
+    Returns high-conviction white space Micro-SaaS opportunities
+    synthesized from cross-cluster pain omissions and validated with Google SEO demand.
+    """
+    opps = db.get_whitespace_opportunities(category_slug)
+    if not opps and category_slug:
+        from pipeline.whitespace_omission_analyzer import WhitespaceOmissionAnalyzer
+        w_engine = WhitespaceOmissionAnalyzer(db=db)
+        res = w_engine.analyze_category_whitespace(category_slug)
+        opps = res.get("whitespace_opportunities", [])
+
+    return opps
+
+@app.post("/api/cluster-and-mine")
+def trigger_cluster_and_whitespace_mine(req: MineRequest):
+    """
+    Triggers end-to-end multi-signal clustering, cross-cluster pain omission analysis,
+    and Google-demand-validated white space Micro-SaaS generation.
+    """
+    try:
+        from pipeline.whitespace_omission_analyzer import WhitespaceOmissionAnalyzer
+        w_engine = WhitespaceOmissionAnalyzer(db=db)
+        result = w_engine.analyze_category_whitespace(req.category_slug)
+        return {
+            "status": "success",
+            "message": f"Successfully clustered competitors and synthesized {len(result.get('whitespace_opportunities', []))} white space opportunities for '{req.category_slug}'!",
+            "data": result
+        }
+    except Exception as e:
+        logging.error(f"Clustering & whitespace analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/evidence")
 def get_review_evidence(category_slug: Optional[str] = None, product_slug: Optional[str] = None, limit: int = 50):
     if product_slug:

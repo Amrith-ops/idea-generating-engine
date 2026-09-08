@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS g2_categories (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. G2 Products Table (with Orbit classification)
+-- 2. G2 Products Table (with Orbit classification & Feature sets)
 CREATE TABLE IF NOT EXISTS g2_products (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -28,6 +28,9 @@ CREATE TABLE IF NOT EXISTS g2_products (
     pricing_model TEXT,
     market_segment TEXT,
     primary_vulnerability TEXT,
+    features JSONB DEFAULT '[]'::jsonb,
+    cluster_id TEXT,
+    cluster_name TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -96,6 +99,38 @@ CREATE TABLE IF NOT EXISTS microsaas_opportunities (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 6. Competitor Clusters Table (Multi-Signal Affinity Groups)
+CREATE TABLE IF NOT EXISTS competitor_clusters (
+    id SERIAL PRIMARY KEY,
+    cluster_slug TEXT NOT NULL UNIQUE,
+    category_slug TEXT REFERENCES g2_categories(slug) ON DELETE CASCADE,
+    cluster_name TEXT NOT NULL,
+    cluster_theme TEXT,
+    target_tier TEXT,
+    product_slugs TEXT[] DEFAULT '{}',
+    common_pains JSONB DEFAULT '[]'::jsonb,
+    unaddressed_gaps JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. White Space Opportunities Table (Synthesized from Cross-Cluster Omissions)
+CREATE TABLE IF NOT EXISTS whitespace_opportunities (
+    id SERIAL PRIMARY KEY,
+    slug TEXT NOT NULL UNIQUE,
+    category_slug TEXT REFERENCES g2_categories(slug) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    target_omission_summary TEXT NOT NULL,
+    unaddressed_pain_slugs TEXT[] DEFAULT '{}',
+    attacked_cluster_slugs TEXT[] DEFAULT '{}',
+    unbundling_wedge TEXT NOT NULL,
+    target_icp TEXT NOT NULL,
+    pricing_strategy TEXT NOT NULL,
+    core_features JSONB DEFAULT '[]'::jsonb,
+    search_demand_keywords JSONB DEFAULT '[]'::jsonb,
+    osi_score NUMERIC(3,1) NOT NULL DEFAULT 9.0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indices for rapid querying
 CREATE INDEX IF NOT EXISTS idx_products_category ON g2_products(category_slug);
 CREATE INDEX IF NOT EXISTS idx_products_orbit ON g2_products(orbit_tier);
@@ -103,3 +138,7 @@ CREATE INDEX IF NOT EXISTS idx_reviews_product ON g2_reviews(product_slug);
 CREATE INDEX IF NOT EXISTS idx_reviews_tier ON g2_reviews(company_size_tier);
 CREATE INDEX IF NOT EXISTS idx_reviews_rating ON g2_reviews(star_rating);
 CREATE INDEX IF NOT EXISTS idx_opps_osi ON microsaas_opportunities(osi_score DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_g2_reviews_unique_hash ON g2_reviews (product_slug, md5(dislike_text));
+CREATE INDEX IF NOT EXISTS idx_clusters_category ON competitor_clusters(category_slug);
+CREATE INDEX IF NOT EXISTS idx_whitespace_category ON whitespace_opportunities(category_slug);
+

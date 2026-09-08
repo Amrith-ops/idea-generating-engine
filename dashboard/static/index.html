@@ -119,10 +119,15 @@
           <span class="tab-label">Search Volume & Keyword Demand</span>
           <span class="tab-badge" style="background:rgba(16,185,129,0.2); color:var(--emerald-glow); border-color:rgba(16,185,129,0.4);">Demand Verified</span>
         </button>
+        <button class="view-tab-btn" id="tab-btn-clusters" onclick="switchMainView('clusters')">
+          <span class="tab-icon">🔮</span>
+          <span class="tab-label">Competitor Clusters & White Space</span>
+          <span class="tab-badge" style="background:rgba(168,85,247,0.2); color:var(--purple-glow); border-color:rgba(168,85,247,0.4);" id="whitespace-count-badge">White Space Matrix</span>
+        </button>
       </div>
       <div class="view-nav-stats">
         <span class="live-dot"></span>
-        <span>Satellite Orbit Engine Active</span>
+        <span>Satellite Orbit & Clustering Engine Active</span>
       </div>
     </nav>
 
@@ -360,6 +365,42 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. COMPETITOR CLUSTERS & WHITE SPACE MATRIX VIEW -->
+    <section id="clusters-view-section" class="clusters-view-section hidden">
+      <div class="keyword-header-card" style="border-color: rgba(168,85,247,0.3); background: linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+        <div class="kw-header-info">
+          <h3>🔮 Multi-Signal Competitor Clustering & White Space Engine</h3>
+          <p>Clusters competitors using <b>Feature Matrices, ICP Alignment, and Google Search Graphs</b> to identify <b>Systemic Pain Omissions</b> left unaddressed across all incumbent groups.</p>
+        </div>
+        <div class="kw-stat-badges">
+          <button class="btn-primary" onclick="triggerClusterAndMine()" id="btn-recluster" style="background:linear-gradient(135deg, #A855F7 0%, #7C3AED 100%); color:#FFF;">
+            <span id="btn-recluster-text">⚡ Re-Cluster & Discover White Spaces</span>
+            <div id="btn-recluster-spinner" class="spinner hidden" style="border-top-color:#FFF;"></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION 1: COMPETITOR CLUSTERS BREAKDOWN -->
+      <div style="margin-bottom: 2rem;">
+        <div class="section-label" style="font-size: 1rem; color:var(--purple-glow); margin-bottom: 1rem;">
+          🏢 Strategic Competitor Clusters in <span id="clusters-category-title">Active Sub-Category</span>
+        </div>
+        <div id="clusters-grid" class="clusters-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- SECTION 2: WHITE SPACE OPPORTUNITIES -->
+      <div>
+        <div class="section-label" style="font-size: 1rem; color:var(--emerald-glow); margin-bottom: 1rem;">
+          ✨ High-Conviction White Space Opportunities (Systemic Pain Omissions + Google SEO Validated)
+        </div>
+        <div id="whitespace-opportunities-grid" class="whitespace-grid">
+          <!-- Populated by JS -->
         </div>
       </div>
     </section>

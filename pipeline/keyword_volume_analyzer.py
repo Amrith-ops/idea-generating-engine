@@ -223,6 +223,15 @@ class KeywordVolumeAnalyzer:
         final_keywords.sort(key=lambda x: x["monthly_search_volume"], reverse=True)
         return final_keywords[:15]
 
+    def analyze_keyword_demand(self, keyword: str, category_slug: str = "") -> Dict[str, Any]:
+        """
+        Calculates live demand, estimated search volume, YoY growth, and CPC for a specific keyword phrase.
+        """
+        suggestions = self.fetch_live_google_suggestions(keyword)
+        relevance = suggestions[0][1] if suggestions else 850
+        rank_idx = 0
+        return self.classify_intent_and_metrics(keyword, relevance, rank_idx)
+
     def sync_category_keywords(self, category_slug: str):
         """
         Fetches live keywords from Google Suggest, mines corpus N-grams, and persists to PostgreSQL.
