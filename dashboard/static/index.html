@@ -384,6 +384,107 @@
         </div>
       </div>
 
+      <!-- SECTION 0: STRATEGIC INTELLIGENCE HUB (AGENT 2 WEIGHT RATIONALE & AGENT 4 RED-TEAM AUDIT) -->
+      <div id="strategic-intelligence-hub" class="strategic-hub-deck">
+        <!-- CARD 1: DYNAMIC CATEGORY WEIGHT STRATEGY -->
+        <div class="strategic-card weight-strategy-card" id="card-weight-strategy">
+          <div class="strategic-card-header">
+            <div class="strat-title-group">
+              <span class="strat-icon">⚖️</span>
+              <div>
+                <h4>Agent 2: Category Weight Strategy & Formula Tuning</h4>
+                <p>Dynamic mathematical similarity weights computed for <span id="strat-cat-name" class="highlight-txt">Help Desk</span> based on domain physics.</p>
+              </div>
+            </div>
+            <span class="strat-badge purple">Dynamic Formula Active</span>
+          </div>
+          
+          <div class="weights-gauge-grid" id="weights-gauge-container">
+            <!-- Populated by JS -->
+            <div class="weight-gauge-item">
+              <div class="weight-gauge-label">
+                <span>JTBD Capabilities (W_cap)</span>
+                <span id="wt-val-cap" class="wt-val">30%</span>
+              </div>
+              <div class="weight-bar-track"><div id="wt-bar-cap" class="weight-bar-fill" style="width:30%;"></div></div>
+            </div>
+            <div class="weight-gauge-item">
+              <div class="weight-gauge-label">
+                <span>Product Philosophy (W_phil)</span>
+                <span id="wt-val-phil" class="wt-val">25%</span>
+              </div>
+              <div class="weight-bar-track"><div id="wt-bar-phil" class="weight-bar-fill" style="width:25%; background:linear-gradient(90deg, #A855F7, #EC4899);"></div></div>
+            </div>
+            <div class="weight-gauge-item">
+              <div class="weight-gauge-label">
+                <span>Market Tier & Price (W_tier)</span>
+                <span id="wt-val-tier" class="wt-val">20%</span>
+              </div>
+              <div class="weight-bar-track"><div id="wt-bar-tier" class="weight-bar-fill" style="width:20%; background:linear-gradient(90deg, #3B82F6, #06B6D4);"></div></div>
+            </div>
+            <div class="weight-gauge-item">
+              <div class="weight-gauge-label">
+                <span>Google Search Graph (W_gsearch)</span>
+                <span id="wt-val-gsearch" class="wt-val">15%</span>
+              </div>
+              <div class="weight-bar-track"><div id="wt-bar-gsearch" class="weight-bar-fill" style="width:15%; background:linear-gradient(90deg, #10B981, #059669);"></div></div>
+            </div>
+            <div class="weight-gauge-item">
+              <div class="weight-gauge-label">
+                <span>Churn & Pricing Pain (W_churn)</span>
+                <span id="wt-val-churn" class="wt-val">10%</span>
+              </div>
+              <div class="weight-bar-track"><div id="wt-bar-churn" class="weight-bar-fill" style="width:10%; background:linear-gradient(90deg, #F59E0B, #EF4444);"></div></div>
+            </div>
+          </div>
+
+          <div class="strat-rationale-box">
+            <div class="strat-rationale-title">🧠 Strategic Domain Rationale:</div>
+            <p id="strat-weight-rationale" class="strat-rationale-text">
+              In this category, architectural philosophy (Queue vs Conversational vs Shared Inbox) dictates true competitive gravity. High weight is assigned to capability vectors while market tier segmentation separates enterprise suites from SMB tools.
+            </p>
+          </div>
+        </div>
+
+        <!-- CARD 2: RED-TEAM ADVERSARIAL AUDITOR VERDICT -->
+        <div class="strategic-card red-team-card" id="card-red-team">
+          <div class="strategic-card-header">
+            <div class="strat-title-group">
+              <span class="strat-icon">🛡️</span>
+              <div>
+                <h4>Agent 4: Red-Team Adversarial Audit Verdict</h4>
+                <p>Independent anti-hallucination gate auditing proposed white spaces against customer review citations.</p>
+              </div>
+            </div>
+            <span id="redteam-status-badge" class="strat-badge green">PASSED (Verified)</span>
+          </div>
+
+          <div class="audit-stats-row">
+            <div class="audit-stat-item">
+              <span class="audit-stat-label">Audit Confidence</span>
+              <span id="audit-confidence-val" class="audit-stat-value emerald">94%</span>
+            </div>
+            <div class="audit-stat-item">
+              <span class="audit-stat-label">Systemic Omissions Verified</span>
+              <span id="audit-verified-count" class="audit-stat-value purple">3 Omissions</span>
+            </div>
+            <div class="audit-stat-item">
+              <span class="audit-stat-label">Hallucinations Rejected</span>
+              <span id="audit-rejected-count" class="audit-stat-value amber">0 Filtered</span>
+            </div>
+          </div>
+
+          <div class="audit-observations-box">
+            <div class="strat-rationale-title">🔍 Red-Team Critic Observations:</div>
+            <ul id="audit-observations-list" class="audit-obs-list">
+              <li>✓ Verified that no incumbent currently provides flat-rate pricing with zero tiered seat escalation.</li>
+              <li>✓ Customer reviews confirm high dissatisfaction regarding multi-week onboarding delays.</li>
+              <li>✓ Cross-cluster pain overlap validated against G2/Capterra review corpus.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       <!-- SECTION 1: COMPETITOR CLUSTERS BREAKDOWN -->
       <div style="margin-bottom: 2rem;">
         <div class="section-label" style="font-size: 1rem; color:var(--purple-glow); margin-bottom: 1rem;">
@@ -466,8 +567,124 @@
       </div>
     </div>
 
+    <!-- MODAL OVERLAY: LIVE AGENT STREAMING & PROGRESS TRACKER -->
+    <div id="agent-progress-modal" class="modal-overlay hidden" onclick="handleAgentModalOverlayClick(event)">
+      <div class="modal-card agent-progress-modal-card" onclick="event.stopPropagation()">
+        <div class="agent-modal-header">
+          <div class="agent-modal-brand">
+            <div class="agent-pulse-icon">⚡</div>
+            <div>
+              <h3 id="agent-modal-title">Autonomous 5-Agent Collaborative Loop</h3>
+              <p id="agent-modal-subtitle">Live real-time telemetry streaming for <span id="prog-target-name" class="highlight-target">Help Desk Software</span></p>
+            </div>
+          </div>
+          <button id="btn-close-agent-modal" class="modal-close" onclick="closeAgentProgressModal()">&times;</button>
+        </div>
+
+        <!-- PROGRESS METRICS STATS BAR -->
+        <div class="agent-telemetry-kpis">
+          <div class="telemetry-kpi-card">
+            <span class="telemetry-kpi-label">Total Category Products</span>
+            <div class="telemetry-kpi-val" id="prog-total-prods">--</div>
+            <span class="telemetry-kpi-sub">In Taxonomy Index</span>
+          </div>
+          <div class="telemetry-kpi-card glow-cyan">
+            <span class="telemetry-kpi-label">Products Scraped & Profiled</span>
+            <div class="telemetry-kpi-val cyan" id="prog-scraped-prods">--</div>
+            <span class="telemetry-kpi-sub">Full Capability Extraction</span>
+          </div>
+          <div class="telemetry-kpi-card glow-purple">
+            <span class="telemetry-kpi-label">Active AI Agent</span>
+            <div class="telemetry-kpi-val purple" id="prog-active-agent">Initializing</div>
+            <span class="telemetry-kpi-sub" id="prog-agent-role">Multi-Model Fallback</span>
+          </div>
+          <div class="telemetry-kpi-card glow-emerald">
+            <span class="telemetry-kpi-label">Loop Progress</span>
+            <div class="telemetry-kpi-val emerald" id="prog-percent-text">0%</div>
+            <span class="telemetry-kpi-sub" id="prog-status-text">Starting...</span>
+          </div>
+        </div>
+
+        <!-- GLOWING ANIMATED PROGRESS BAR -->
+        <div class="agent-prog-container">
+          <div class="agent-prog-track">
+            <div id="prog-bar-fill" class="agent-prog-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- VISUAL 7-STEP PROGRESS STEPPER -->
+        <div class="agent-stepper" id="agent-stepper">
+          <div class="stepper-step" id="step-1" data-step="1">
+            <div class="step-circle"><span class="step-num">1</span></div>
+            <div class="step-label">Scout & Scraper</div>
+          </div>
+          <div class="stepper-line" id="line-1"></div>
+
+          <div class="stepper-step" id="step-2" data-step="2">
+            <div class="step-circle"><span class="step-num">2</span></div>
+            <div class="step-label">1. Normalizer</div>
+          </div>
+          <div class="stepper-line" id="line-2"></div>
+
+          <div class="stepper-step" id="step-3" data-step="3">
+            <div class="step-circle"><span class="step-num">3</span></div>
+            <div class="step-label">2. Strategist</div>
+          </div>
+          <div class="stepper-line" id="line-3"></div>
+
+          <div class="stepper-step" id="step-4" data-step="4">
+            <div class="step-circle"><span class="step-num">4</span></div>
+            <div class="step-label">3. Math Matrix</div>
+          </div>
+          <div class="stepper-line" id="line-4"></div>
+
+          <div class="stepper-step" id="step-5" data-step="5">
+            <div class="step-circle"><span class="step-num">5</span></div>
+            <div class="step-label">4. Formulator</div>
+          </div>
+          <div class="stepper-line" id="line-5"></div>
+
+          <div class="stepper-step" id="step-6" data-step="6">
+            <div class="step-circle"><span class="step-num">6</span></div>
+            <div class="step-label">5. Red-Team</div>
+          </div>
+          <div class="stepper-line" id="line-6"></div>
+
+          <div class="stepper-step" id="step-7" data-step="7">
+            <div class="step-circle"><span class="step-num">7</span></div>
+            <div class="step-label">6. Architect & SEO</div>
+          </div>
+        </div>
+
+        <!-- LIVE STREAMING TERMINAL CONSOLE -->
+        <div class="agent-terminal-box">
+          <div class="terminal-header">
+            <div class="terminal-controls">
+              <span class="term-dot red"></span>
+              <span class="term-dot yellow"></span>
+              <span class="term-dot green"></span>
+            </div>
+            <span class="term-title">Agentic Execution Stream & Thought Telemetry</span>
+            <span class="term-live-tag"><span class="live-dot"></span> LIVE NDJSON STREAM</span>
+          </div>
+          <div class="terminal-body" id="agent-terminal-logs">
+            <div class="term-log-line system">[SYSTEM] Ready. Listening to streaming socket...</div>
+          </div>
+        </div>
+
+        <!-- FOOTER ACTIONS -->
+        <div class="agent-modal-footer">
+          <span class="agent-footer-hint" id="agent-footer-hint">Agentic loop in progress. Streaming thoughts and linear algebra calculations...</span>
+          <button id="btn-finish-agent-modal" class="btn-primary" onclick="closeAgentProgressModal()" disabled>
+            Done & View Strategic Intelligence
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script src="/static/app.js"></script>
 </body>
 </html>
+

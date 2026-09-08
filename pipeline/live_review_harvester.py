@@ -150,10 +150,28 @@ Return valid JSON with key "reviews" containing the array of 3 review objects.
                 }
             ]
 
-    def harvest_category_and_mine(self, category_slug: str):
+    def harvest_category_and_mine(self, category_slug: str, progress_callback: Optional[Any] = None):
         """
-        End-to-end autonomous harvest and ideation pipeline for any category.
+        End-to-end autonomous harvest and ideation pipeline for any category with live progress streaming.
         """
+        def emit(step_idx: int, step_name: str, pct: int, agent: str, status: str, log: str, total_prods: int = 0, scraped_prods: int = 0, data: Optional[Dict[str, Any]] = None):
+            logging.info(f"[{pct}%] [{agent}] {status}")
+            if progress_callback:
+                try:
+                    progress_callback({
+                        "step_index": step_idx,
+                        "step_name": step_name,
+                        "progress_pct": pct,
+                        "active_agent": agent,
+                        "status_message": status,
+                        "log_entry": log,
+                        "total_products": total_prods,
+                        "scraped_products": scraped_prods,
+                        "data": data or {}
+                    })
+                except Exception as e:
+                    logging.warning(f"Error in progress callback: {e}")
+
         # Fetch category metadata from database
         cat_rows = self.db.fetch_all("SELECT name, slug, description FROM g2_categories WHERE slug = %s", (category_slug,))
         if not cat_rows:
@@ -161,6 +179,7 @@ Return valid JSON with key "reviews" containing the array of 3 review objects.
             cat_rows = self.db.fetch_all("SELECT name, slug, description FROM g2_categories WHERE slug LIKE %s LIMIT 1", (f"%{category_slug}%",))
             if not cat_rows:
                 logging.error(f"Category slug '{category_slug}' not found in database.")
+                emit(1, "Discovery", 100, "Harvester", f"Category slug '{category_slug}' not found in database.", "Error: category not found")
                 return
 
         cat = cat_rows[0]
@@ -171,16 +190,26 @@ Return valid JSON with key "reviews" containing the array of 3 review objects.
         logging.info(f"🚀 LIVE HARVESTER START: '{category_name}' ({category_slug})")
         logging.info(f"══════════════════════════════════════════════════════════════════")
 
+        emit(1, "Product Discovery", 10, "Discovery Engine", f"Discovering market leaders and challengers in '{category_name}'...", f"Querying G2 & Capterra search graph for top products in '{category_name}'...")
+
         # Step 1: Discover Products
         discovered_products = self.discover_category_products(category_name)
-        
+        total_products_count = len(discovered_products)
+
+        emit(1, "Product Discovery", 25, "Discovery Engine", f"Identified {total_products_count} key products in '{category_name}'.", f"Discovered products: {', '.join([p['name'] for p in discovered_products])}", total_prods=total_products_count, scraped_prods=0)
+
         products_for_db = []
         all_reviews = []
 
-        for p in discovered_products:
-            prod_slug = re.sub(r'[^a-zA-Z0-9]+', '-', p["name"].lower()).strip('-')
+        # Step 2: Harvest Negative Reviews for each product
+        for idx, p in enumerate(discovered_products, 1):
+            prod_name = p["name"]
+            prod_pct = 25 + int((idx / max(total_products_count, 1)) * 35)
+            emit(2, "Review Harvester", prod_pct, "Negative Review Crawler", f"Scraping reviews for product {idx}/{total_products_count}: '{prod_name}'...", f"Harvesting 1-3 star negative reviews and pricing complaints for '{prod_name}'...", total_prods=total_products_count, scraped_prods=idx)
+
+            prod_slug = re.sub(r'[^a-zA-Z0-9]+', '-', prod_name.lower()).strip('-')
             prod_dict = {
-                "name": p["name"],
+                "name": prod_name,
                 "slug": prod_slug,
                 "category_slug": category_slug,
                 "category_name": category_name,
@@ -196,14 +225,14 @@ Return valid JSON with key "reviews" containing the array of 3 review objects.
             self.db.insert_product(prod_dict)
             products_for_db.append(prod_dict)
 
-            # Step 2: Harvest Negative Reviews
-            p_reviews = self.harvest_product_negative_reviews(p["name"], category_name)
+            p_reviews = self.harvest_product_negative_reviews(prod_name, category_name)
             for r in p_reviews:
                 self.db.insert_review(r)
                 all_reviews.append(r)
 
         # Step 3: Run Gemini AI Opportunity Engine
-        logging.info(f"🧠 Synthesizing Micro-SaaS Opportunities with Gemini AI...")
+        emit(3, "Opportunity Engine", 65, "Gemini 3.0 Pro", f"Synthesizing Micro-SaaS unbundling opportunities from {len(all_reviews)} review vectors...", "Clustering negative reviews by pain dimension and generating unbundling dossiers...", total_prods=total_products_count, scraped_prods=total_products_count)
+
         ai_data = self.gemini.analyze_category_cluster(
             category_name=category_name,
             category_slug=category_slug,
@@ -217,6 +246,8 @@ Return valid JSON with key "reviews" containing the array of 3 review objects.
         logging.info(f"✨ Synthesized {len(pain_clusters)} Pain Clusters and {len(opportunities)} Micro-SaaS Dossiers.")
 
         # Step 4: Save to Database & Export to Obsidian Vault
+        emit(4, "Obsidian & DB Sync", 85, "Database Client", f"Persisting {len(pain_clusters)} pain clusters and {len(opportunities)} opportunities...", "Syncing markdown dossiers to Obsidian Vault...", total_prods=total_products_count, scraped_prods=total_products_count)
+
         for pc in pain_clusters:
             self.db.insert_pain_cluster(pc)
             self.exporter.export_pain_cluster(pc, pc.get("affected_products", []), pc.get("linked_opps", []))
@@ -233,6 +264,7 @@ Return valid JSON with key "reviews" containing the array of 3 review objects.
             self.exporter.export_product(p, triaged, linked_p, linked_o)
 
         # Step 5: Auto-Sync Live Google Keywords & N-Grams
+        emit(5, "SEO Demand Indexing", 95, "Google SEO Analyzer", "Syncing Google Autocomplete keyword demand and search volumes...", "Querying live search volumes and YoY growth rates...", total_prods=total_products_count, scraped_prods=total_products_count)
         try:
             from pipeline.keyword_volume_analyzer import KeywordVolumeAnalyzer
             kw_analyzer = KeywordVolumeAnalyzer()
@@ -241,9 +273,10 @@ Return valid JSON with key "reviews" containing the array of 3 review objects.
         except Exception as e:
             logging.warning(f"Keyword sync failed for '{category_slug}': {e}")
 
+        emit(5, "Complete", 100, "Discovery Engine", f"Successfully harvested and synthesized '{category_name}'!", f"Indexed {len(products_for_db)} products, {len(all_reviews)} reviews, {len(opportunities)} Micro-SaaS ideas.", total_prods=total_products_count, scraped_prods=total_products_count, data={"opportunities": opportunities, "pain_clusters": pain_clusters})
         logging.info(f"🎉 SUCCESS! Category '{category_name}' completely harvested and synced to Obsidian Brain!")
 
-    def harvest_root_sector(self, root_slug: str, max_subs: int = 3) -> List[str]:
+    def harvest_root_sector(self, root_slug: str, max_subs: int = 3, progress_callback: Optional[Any] = None) -> List[str]:
         """
         Harvests across the subcategories under a root macro sector (e.g. 'customer-service', 'sales-tools', 'erp').
         """
@@ -254,14 +287,14 @@ Return valid JSON with key "reviews" containing the array of 3 review objects.
         )
         if not subs:
             logging.info(f"No explicit subcategories found for '{root_slug}', mining as standalone category...")
-            self.harvest_category_and_mine(root_slug)
+            self.harvest_category_and_mine(root_slug, progress_callback=progress_callback)
             return [root_slug]
         
         harvested = []
-        for sub in subs:
+        for idx, sub in enumerate(subs, 1):
             logging.info(f"🌿 Harvesting sub-category '{sub['name']}' ({sub['slug']}) under root '{root_slug}'...")
             try:
-                self.harvest_category_and_mine(sub['slug'])
+                self.harvest_category_and_mine(sub['slug'], progress_callback=progress_callback)
                 harvested.append(sub['slug'])
             except Exception as e:
                 logging.error(f"Failed to harvest sub-category '{sub['slug']}': {e}")
