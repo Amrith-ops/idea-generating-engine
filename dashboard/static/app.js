@@ -47,20 +47,24 @@ function switchMainView(mode) {
   const gridSection = document.getElementById('grid-view-section');
   const keywordSection = document.getElementById('keyword-view-section');
   const clustersSection = document.getElementById('clusters-view-section');
+  const paingraphSection = document.getElementById('paingraph-view-section');
   const orbitTabBtn = document.getElementById('tab-btn-orbit');
   const gridTabBtn = document.getElementById('tab-btn-grid');
   const kwTabBtn = document.getElementById('tab-btn-keywords');
   const clustersTabBtn = document.getElementById('tab-btn-clusters');
+  const paingraphTabBtn = document.getElementById('tab-btn-paingraph');
 
   if (orbitSection) orbitSection.classList.add('hidden');
   if (gridSection) gridSection.classList.add('hidden');
   if (keywordSection) keywordSection.classList.add('hidden');
   if (clustersSection) clustersSection.classList.add('hidden');
+  if (paingraphSection) paingraphSection.classList.add('hidden');
 
   if (orbitTabBtn) orbitTabBtn.classList.remove('active');
   if (gridTabBtn) gridTabBtn.classList.remove('active');
   if (kwTabBtn) kwTabBtn.classList.remove('active');
   if (clustersTabBtn) clustersTabBtn.classList.remove('active');
+  if (paingraphTabBtn) paingraphTabBtn.classList.remove('active');
 
   if (mode === 'orbit') {
     if (orbitSection) orbitSection.classList.remove('hidden');
@@ -80,6 +84,10 @@ function switchMainView(mode) {
     if (clustersSection) clustersSection.classList.remove('hidden');
     if (clustersTabBtn) clustersTabBtn.classList.add('active');
     loadClustersView(activeCategorySlug || 'help-desk');
+  } else if (mode === 'paingraph') {
+    if (paingraphSection) paingraphSection.classList.remove('hidden');
+    if (paingraphTabBtn) paingraphTabBtn.classList.add('active');
+    loadPainGraphView(activeCategorySlug || 'help-desk');
   }
 }
 
@@ -1977,4 +1985,875 @@ function renderStrategicIntelligence(categorySlug, weightAnalysis, auditResult) 
     }
   }
 }
+
+/* ==========================================================================
+   VIEW 5: CROSS-CLUSTER PAIN NETWORK & UNRESOLVED OMISSION MATRIX ENGINE
+   ========================================================================== */
+
+let pgNodes = [];
+let pgEdges = [];
+let pgRawGraphData = null;
+let pgActiveFilter = 'all'; // 'all', 'shared', 'omissions', 'isolated'
+let pgSelectedCluster = 'all';
+let pgSearchQuery = '';
+let pgSelectedNode = null;
+let pgHoveredNode = null;
+let pgIsPhysicsRunning = true;
+let pgCamera = { x: 0, y: 0, zoom: 1 };
+let pgIsDragging = false;
+let pgDragNode = null;
+let pgLastMousePos = { x: 0, y: 0 };
+let pgAnimationId = null;
+let pgCanvasInitialized = false;
+
+async function loadPainGraphView(categorySlug) {
+  const catSlug = categorySlug || activeCategorySlug || 'help-desk';
+  const catPill = document.getElementById('pg-active-cat-name');
+  if (catPill) {
+    catPill.innerText = catSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // Set loading state in stats
+  ['clusters', 'shared', 'isolated', 'omissions', 'solutions'].forEach(k => {
+    const el = document.getElementById(`pg-stat-${k}`);
+    if (el) el.innerText = '...';
+  });
+
+  try {
+    const res = await fetch(`/api/cluster-pain-graph?category_slug=${catSlug}`);
+    const data = await res.json();
+    pgRawGraphData = data;
+
+    // Update Telemetry KPI Stats
+    const metrics = data.summary_metrics || {};
+    if (document.getElementById('pg-stat-clusters')) document.getElementById('pg-stat-clusters').innerText = metrics.total_clusters || 0;
+    if (document.getElementById('pg-stat-shared')) document.getElementById('pg-stat-shared').innerText = metrics.shared_pains_count || 0;
+    if (document.getElementById('pg-stat-isolated')) document.getElementById('pg-stat-isolated').innerText = metrics.isolated_pains_count || 0;
+    if (document.getElementById('pg-stat-omissions')) document.getElementById('pg-stat-omissions').innerText = `${metrics.unresolved_omissions_count || 0} Vacuums`;
+    if (document.getElementById('pg-stat-solutions')) document.getElementById('pg-stat-solutions').innerText = metrics.total_solutions_count || 0;
+
+    // Populate Cluster Filter Dropdown
+    const clusterSelect = document.getElementById('pg-cluster-select');
+    if (clusterSelect) {
+      const clusterNodes = (data.nodes || []).filter(n => n.node_type === 'cluster');
+      clusterSelect.innerHTML = '<option value="all">🏢 All Clusters</option>' + 
+        clusterNodes.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+    }
+
+    // Initialize Graph Geometry & Physics
+    setupPainGraphData(data.nodes || [], data.edges || []);
+
+    if (!pgCanvasInitialized) {
+      initPainGraphCanvas();
+      pgCanvasInitialized = true;
+    }
+
+    // Reset camera center
+    resetGraphCamera();
+
+    // Start render loop if not running
+    if (!pgAnimationId) {
+      pgAnimationId = requestAnimationFrame(painGraphRenderLoop);
+    }
+
+  } catch (err) {
+    console.error('Failed to load cluster pain graph:', err);
+  }
+}
+
+function setupPainGraphData(rawNodes, rawEdges) {
+  const container = document.getElementById('paingraph-canvas-container');
+  const width = container ? container.clientWidth : 1000;
+  const height = container ? container.clientHeight : 700;
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  const clusterNodes = rawNodes.filter(n => n.node_type === 'cluster');
+  const sharedPainNodes = rawNodes.filter(n => n.node_type === 'pain_shared');
+  const isolatedPainNodes = rawNodes.filter(n => n.node_type === 'pain_isolated');
+  const omissionNodes = rawNodes.filter(n => n.node_type === 'unresolved_omission');
+  const solutionNodes = rawNodes.filter(n => n.node_type === 'micro_saas_solution');
+
+  // Place Cluster Hubs evenly on a central circle
+  const clusterRadius = 180;
+  clusterNodes.forEach((c, i) => {
+    const angle = (i / Math.max(1, clusterNodes.length)) * Math.PI * 2 - Math.PI / 2;
+    c.x = centerX + Math.cos(angle) * clusterRadius;
+    c.y = centerY + Math.sin(angle) * clusterRadius;
+    c.vx = 0;
+    c.vy = 0;
+    c.radius = 28 + (c.product_count || 2) * 3;
+    c.mass = 4.0;
+  });
+
+  // Place Shared Pains between clusters
+  sharedPainNodes.forEach((sp, i) => {
+    const angle = (i / Math.max(1, sharedPainNodes.length)) * Math.PI * 2;
+    sp.x = centerX + Math.cos(angle) * 70 + (Math.random() - 0.5) * 40;
+    sp.y = centerY + Math.sin(angle) * 70 + (Math.random() - 0.5) * 40;
+    sp.vx = 0;
+    sp.vy = 0;
+    sp.radius = 18 + (sp.connected_clusters_count || 2) * 2;
+    sp.mass = 2.0;
+  });
+
+  // Place Isolated Pains near their respective clusters
+  isolatedPainNodes.forEach((ip, i) => {
+    const parentClusterId = ip.connected_clusters && ip.connected_clusters[0];
+    const parent = clusterNodes.find(c => c.id === parentClusterId) || clusterNodes[0];
+    const parentX = parent ? parent.x : centerX;
+    const parentY = parent ? parent.y : centerY;
+    const offsetAngle = (i * 1.5) + Math.random();
+    ip.x = parentX + Math.cos(offsetAngle) * 90;
+    ip.y = parentY + Math.sin(offsetAngle) * 90;
+    ip.vx = 0;
+    ip.vy = 0;
+    ip.radius = 16;
+    ip.mass = 1.5;
+  });
+
+  // Place 100% Unresolved Blind Spots orbiting in the outer white space perimeter
+  const omissionRadius = 310;
+  omissionNodes.forEach((om, i) => {
+    const angle = (i / Math.max(1, omissionNodes.length)) * Math.PI * 2 + 0.3;
+    om.x = centerX + Math.cos(angle) * omissionRadius;
+    om.y = centerY + Math.sin(angle) * omissionRadius;
+    om.vx = 0;
+    om.vy = 0;
+    om.radius = 22;
+    om.mass = 2.5;
+    om.pulsePhase = i * 0.8;
+  });
+
+  // Place Micro-SaaS Solutions satellite pairs just outside each Omission
+  solutionNodes.forEach((sol, i) => {
+    const matchOmission = omissionNodes[i % Math.max(1, omissionNodes.length)];
+    const omX = matchOmission ? matchOmission.x : centerX + 260;
+    const omY = matchOmission ? matchOmission.y : centerY + 260;
+    sol.x = omX + 45;
+    sol.y = omY + 45;
+    sol.vx = 0;
+    sol.vy = 0;
+    sol.radius = 20;
+    sol.mass = 1.8;
+  });
+
+  pgNodes = [...clusterNodes, ...sharedPainNodes, ...isolatedPainNodes, ...omissionNodes, ...solutionNodes];
+
+  // Map edges to actual node object references
+  const nodeMap = new Map(pgNodes.map(n => [n.id, n]));
+  pgEdges = rawEdges.map(e => ({
+    ...e,
+    sourceNode: nodeMap.get(e.source),
+    targetNode: nodeMap.get(e.target)
+  })).filter(e => e.sourceNode && e.targetNode);
+}
+
+function initPainGraphCanvas() {
+  const canvas = document.getElementById('pain-network-canvas');
+  if (!canvas) return;
+
+  const container = document.getElementById('paingraph-canvas-container');
+  const dpr = window.devicePixelRatio || 1;
+
+  function resizeCanvas() {
+    if (!container || !canvas) return;
+    const rect = container.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
+  }
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // MOUSE & DRAG INTERACTIONS
+  canvas.addEventListener('mousedown', (e) => {
+    const pos = getCanvasMousePos(e, canvas);
+    const worldPos = screenToWorldPos(pos);
+    const clickedNode = findNodeAt(worldPos.x, worldPos.y);
+
+    if (clickedNode) {
+      pgDragNode = clickedNode;
+      pgSelectedNode = clickedNode;
+      openPainGraphInspector(clickedNode);
+    } else {
+      pgIsDragging = true;
+      pgLastMousePos = pos;
+    }
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+      if (pgHoveredNode && !pgDragNode) {
+        pgHoveredNode = null;
+        hidePainGraphTooltip();
+      }
+    }
+
+    const pos = getCanvasMousePos(e, canvas);
+
+    if (pgDragNode) {
+      const worldPos = screenToWorldPos(pos);
+      pgDragNode.x = worldPos.x;
+      pgDragNode.y = worldPos.y;
+      pgDragNode.vx = 0;
+      pgDragNode.vy = 0;
+    } else if (pgIsDragging) {
+      const dx = pos.x - pgLastMousePos.x;
+      const dy = pos.y - pgLastMousePos.y;
+      pgCamera.x += dx / pgCamera.zoom;
+      pgCamera.y += dy / pgCamera.zoom;
+      pgLastMousePos = pos;
+    } else {
+      const worldPos = screenToWorldPos(pos);
+      const hovered = findNodeAt(worldPos.x, worldPos.y);
+      if (hovered !== pgHoveredNode) {
+        pgHoveredNode = hovered;
+        if (hovered) {
+          showPainGraphTooltip(hovered, e.clientX, e.clientY);
+        } else {
+          hidePainGraphTooltip();
+        }
+      } else if (hovered) {
+        updateTooltipPosition(e.clientX, e.clientY);
+      }
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    pgDragNode = null;
+    pgIsDragging = false;
+  });
+
+  // ZOOM WITH WHEEL
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+    zoomGraph(zoomFactor);
+  }, { passive: false });
+}
+
+function getCanvasMousePos(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  };
+}
+
+function screenToWorldPos(screenPos) {
+  const container = document.getElementById('paingraph-canvas-container');
+  const w = container ? container.clientWidth : 1000;
+  const h = container ? container.clientHeight : 700;
+  const cx = w / 2;
+  const cy = h / 2;
+
+  return {
+    x: (screenPos.x - cx) / pgCamera.zoom - pgCamera.x + cx,
+    y: (screenPos.y - cy) / pgCamera.zoom - pgCamera.y + cy
+  };
+}
+
+function findNodeAt(worldX, worldY) {
+  for (let i = pgNodes.length - 1; i >= 0; i--) {
+    const node = pgNodes[i];
+    if (!isNodeVisible(node)) continue;
+    const dx = node.x - worldX;
+    const dy = node.y - worldY;
+    if (Math.hypot(dx, dy) <= node.radius + 6) {
+      return node;
+    }
+  }
+  return null;
+}
+
+function isNodeVisible(node) {
+  // Search Filter
+  if (pgSearchQuery) {
+    const q = pgSearchQuery.toLowerCase();
+    const labelMatch = (node.label || '').toLowerCase().includes(q);
+    const summaryMatch = (node.omission_summary || node.theme || '').toLowerCase().includes(q);
+    const quotesMatch = (node.sample_quotes || []).some(quote => quote.toLowerCase().includes(q));
+    if (!labelMatch && !summaryMatch && !quotesMatch) return false;
+  }
+
+  // Cluster Selection Filter
+  if (pgSelectedCluster !== 'all') {
+    if (node.node_type === 'cluster' && node.id !== pgSelectedCluster) return false;
+    if (node.node_type.startsWith('pain_')) {
+      if (!node.connected_clusters || !node.connected_clusters.includes(pgSelectedCluster)) return false;
+    }
+    if (node.node_type === 'unresolved_omission' || node.node_type === 'micro_saas_solution') {
+      if (node.attacked_cluster_slugs && !node.attacked_cluster_slugs.includes(pgSelectedCluster)) return false;
+    }
+  }
+
+  // Type Filter
+  if (pgActiveFilter === 'shared') {
+    return node.node_type === 'cluster' || node.node_type === 'pain_shared';
+  } else if (pgActiveFilter === 'omissions') {
+    return node.node_type === 'cluster' || node.node_type === 'unresolved_omission' || node.node_type === 'micro_saas_solution';
+  } else if (pgActiveFilter === 'isolated') {
+    return node.node_type === 'cluster' || node.node_type === 'pain_isolated';
+  }
+
+  return true;
+}
+
+/* ==========================================================================
+   PHYSICS SIMULATION & RENDER LOOP
+   ========================================================================== */
+function painGraphRenderLoop(timestamp) {
+  if (pgIsPhysicsRunning && !pgDragNode) {
+    updatePainGraphPhysics();
+  }
+
+  renderPainGraph(timestamp);
+  pgAnimationId = requestAnimationFrame(painGraphRenderLoop);
+}
+
+function updatePainGraphPhysics() {
+  const container = document.getElementById('paingraph-canvas-container');
+  const width = container ? container.clientWidth : 1000;
+  const height = container ? container.clientHeight : 700;
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  // 1. Multi-body Coulomb Repulsion
+  for (let i = 0; i < pgNodes.length; i++) {
+    const n1 = pgNodes[i];
+    for (let j = i + 1; j < pgNodes.length; j++) {
+      const n2 = pgNodes[j];
+      const dx = n2.x - n1.x;
+      const dy = n2.y - n1.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const minDist = n1.radius + n2.radius + 35;
+
+      if (dist < 380) {
+        const force = (dist < minDist) ? (minDist - dist) * 0.12 : (1200 / (dist * dist));
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+
+        n1.vx -= fx / n1.mass;
+        n1.vy -= fy / n1.mass;
+        n2.vx += fx / n2.mass;
+        n2.vy += fy / n2.mass;
+      }
+    }
+  }
+
+  // 2. Hooke's Spring Attraction along Edges
+  for (const edge of pgEdges) {
+    const s = edge.sourceNode;
+    const t = edge.targetNode;
+    if (!s || !t) continue;
+
+    const dx = t.x - s.x;
+    const dy = t.y - s.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const idealDist = edge.link_type === 'solution_wedge' ? 55 : (edge.is_shared ? 140 : 110);
+    const force = (dist - idealDist) * 0.008;
+
+    const fx = (dx / dist) * force;
+    const fy = (dy / dist) * force;
+
+    s.vx += fx / s.mass;
+    s.vy += fy / s.mass;
+    t.vx -= fx / t.mass;
+    t.vy -= fy / t.mass;
+  }
+
+  // 3. Central Gravity & Cluster Anchors
+  for (const node of pgNodes) {
+    const dx = centerX - node.x;
+    const dy = centerY - node.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const grav = (node.node_type === 'cluster') ? 0.004 : (node.node_type === 'unresolved_omission' ? 0.001 : 0.002);
+
+    node.vx += dx * grav;
+    node.vy += dy * grav;
+
+    // Velocity integration & damping
+    node.vx *= 0.86;
+    node.vy *= 0.86;
+
+    node.x += node.vx;
+    node.y += node.vy;
+  }
+}
+
+function renderPainGraph(timestamp = 0) {
+  const canvas = document.getElementById('pain-network-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const width = canvas.width / dpr;
+  const height = canvas.height / dpr;
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  // Clear Canvas
+  ctx.clearRect(0, 0, width, height);
+
+  // Background Grid Effect
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
+  const gridSize = 40;
+  for (let x = (centerX + pgCamera.x * pgCamera.zoom) % gridSize; x < width; x += gridSize) {
+    for (let y = (centerY + pgCamera.y * pgCamera.zoom) % gridSize; y < height; y += gridSize) {
+      ctx.fillRect(x, y, 1.5, 1.5);
+    }
+  }
+
+  // Camera Transformation
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.scale(pgCamera.zoom, pgCamera.zoom);
+  ctx.translate(-centerX + pgCamera.x, -centerY + pgCamera.y);
+
+  const tSec = timestamp * 0.001;
+
+  // 1. RENDER EDGES
+  for (const edge of pgEdges) {
+    const s = edge.sourceNode;
+    const t = edge.targetNode;
+    if (!s || !t) continue;
+
+    const sVis = isNodeVisible(s);
+    const tVis = isNodeVisible(t);
+    if (!sVis && !tVis) continue;
+
+    const isDimmed = !sVis || !tVis;
+    const isHighlighted = (pgHoveredNode && (s === pgHoveredNode || t === pgHoveredNode)) ||
+                          (pgSelectedNode && (s === pgSelectedNode || t === pgSelectedNode));
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+
+    // Subtle curve
+    const midX = (s.x + t.x) / 2 + (s.y - t.y) * 0.08;
+    const midY = (s.y + t.y) / 2 + (t.x - s.x) * 0.08;
+    ctx.quadraticCurveTo(midX, midY, t.x, t.y);
+
+    if (edge.link_type === 'unresolved_gap') {
+      // Dashed Vulnerability Line (Red/Pink Laser)
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = isHighlighted ? 'rgba(244, 63, 94, 0.9)' : (isDimmed ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.35)');
+      ctx.lineWidth = isHighlighted ? 2.5 : 1.2;
+    } else if (edge.link_type === 'solution_wedge') {
+      // Solid Emerald Wedge Line
+      ctx.strokeStyle = isHighlighted ? '#10B981' : (isDimmed ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.7)');
+      ctx.lineWidth = isHighlighted ? 3 : 2;
+    } else if (edge.is_shared) {
+      // Glowing Purple Cross-Cluster Shared Bridge
+      ctx.strokeStyle = isHighlighted ? '#C084FC' : (isDimmed ? 'rgba(168, 85, 247, 0.12)' : 'rgba(168, 85, 247, 0.45)');
+      ctx.lineWidth = isHighlighted ? 3 : 1.8;
+    } else {
+      // Cluster-Isolated Pain Link
+      ctx.strokeStyle = isHighlighted ? '#38BDF8' : (isDimmed ? 'rgba(56, 189, 248, 0.1)' : 'rgba(56, 189, 248, 0.3)');
+      ctx.lineWidth = isHighlighted ? 2.2 : 1.2;
+    }
+
+    ctx.stroke();
+
+    // Moving energy photon pulse along edges
+    if (!isDimmed && (edge.is_shared || edge.link_type === 'solution_wedge' || isHighlighted)) {
+      const pulseProgress = (tSec * 0.6 + (edge.weight || 1) * 0.2) % 1;
+      const qx = (1 - pulseProgress) * (1 - pulseProgress) * s.x + 2 * (1 - pulseProgress) * pulseProgress * midX + pulseProgress * pulseProgress * t.x;
+      const qy = (1 - pulseProgress) * (1 - pulseProgress) * s.y + 2 * (1 - pulseProgress) * pulseProgress * midY + pulseProgress * pulseProgress * t.y;
+
+      ctx.beginPath();
+      ctx.arc(qx, qy, edge.is_shared ? 3 : 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = edge.color || '#FFF';
+      ctx.shadowColor = edge.color || '#FFF';
+      ctx.shadowBlur = 8;
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // 2. RENDER NODES
+  for (const node of pgNodes) {
+    const isVisible = isNodeVisible(node);
+    const isHovered = node === pgHoveredNode;
+    const isSelected = node === pgSelectedNode;
+    const isConnectedToHovered = pgHoveredNode && pgEdges.some(e => 
+      (e.sourceNode === pgHoveredNode && e.targetNode === node) || 
+      (e.targetNode === pgHoveredNode && e.sourceNode === node)
+    );
+
+    const opacity = isVisible ? (pgHoveredNode && !isHovered && !isSelected && !isConnectedToHovered ? 0.35 : 1.0) : 0.12;
+
+    ctx.save();
+    ctx.globalAlpha = opacity;
+
+    // A. 100% UNRESOLVED BLIND SPOT (PULSATILE BEACON RINGS)
+    if (node.node_type === 'unresolved_omission') {
+      const phase = (tSec * 2 + (node.pulsePhase || 0)) % (Math.PI * 2);
+      const ringRadius = node.radius + 6 + Math.sin(phase) * 8;
+      const ringAlpha = Math.max(0, 0.6 - (ringRadius - node.radius) / 24);
+
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, ringRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(244, 63, 94, ${ringAlpha})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, node.radius + 14 + Math.sin(phase + 1) * 6, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(244, 63, 94, ${ringAlpha * 0.5})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // B. NODE GLOW AURA
+    const glowRadius = isHovered || isSelected ? node.radius * 1.6 : node.radius * 1.25;
+    const glowGrad = ctx.createRadialGradient(node.x, node.y, node.radius * 0.4, node.x, node.y, glowRadius);
+    glowGrad.addColorStop(0, node.glow || 'rgba(168, 85, 247, 0.4)');
+    glowGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, glowRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // C. NODE MAIN BODY CIRCLE
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+    
+    // Gradient fill
+    const bodyGrad = ctx.createRadialGradient(node.x - node.radius * 0.3, node.y - node.radius * 0.3, 2, node.x, node.y, node.radius);
+    if (node.node_type === 'cluster') {
+      bodyGrad.addColorStop(0, '#1E1B4B');
+      bodyGrad.addColorStop(1, '#0F0E2A');
+    } else if (node.node_type === 'pain_shared') {
+      bodyGrad.addColorStop(0, '#3B185F');
+      bodyGrad.addColorStop(1, '#1A0B2E');
+    } else if (node.node_type === 'pain_isolated') {
+      bodyGrad.addColorStop(0, '#0C4A6E');
+      bodyGrad.addColorStop(1, '#042136');
+    } else if (node.node_type === 'unresolved_omission') {
+      bodyGrad.addColorStop(0, '#881337');
+      bodyGrad.addColorStop(1, '#4C0519');
+    } else { // micro_saas_solution
+      bodyGrad.addColorStop(0, '#064E3B');
+      bodyGrad.addColorStop(1, '#022C22');
+    }
+    
+    ctx.fillStyle = bodyGrad;
+    ctx.fill();
+
+    // Border stroke
+    ctx.strokeStyle = isSelected ? '#FFF' : (isHovered ? '#F1F5F9' : (node.color || '#8B5CF6'));
+    ctx.lineWidth = isSelected ? 3.5 : (isHovered ? 2.5 : 2);
+    ctx.stroke();
+
+    // D. NODE CENTER ICON
+    ctx.font = `${Math.round(node.radius * 0.9)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    let icon = '🎯';
+    if (node.node_type === 'cluster') icon = '🏢';
+    else if (node.node_type === 'pain_shared') icon = '⚠️';
+    else if (node.node_type === 'unresolved_omission') icon = '🚨';
+    else if (node.node_type === 'micro_saas_solution') icon = '🚀';
+
+    ctx.fillText(icon, node.x, node.y + 1);
+
+    // E. NODE LABELS (RENDERED UNDER/OVER NODE)
+    ctx.font = node.node_type === 'cluster' ? 'bold 12px Inter, sans-serif' : '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFF';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 4;
+
+    const label = node.label || '';
+    const displayLabel = label.length > 26 ? label.substring(0, 24) + '...' : label;
+    ctx.fillText(displayLabel, node.x, node.y + node.radius + 14);
+
+    // Sub-badge for Unresolved Omissions / Shared Pains
+    if (node.node_type === 'unresolved_omission') {
+      ctx.font = 'bold 9px Inter, sans-serif';
+      ctx.fillStyle = '#FB7185';
+      ctx.fillText('⚡ 0 Solved (Systemic Gap)', node.x, node.y + node.radius + 26);
+    } else if (node.node_type === 'pain_shared') {
+      ctx.font = '9px Inter, sans-serif';
+      ctx.fillStyle = '#C084FC';
+      ctx.fillText(`🔗 Shared by ${node.connected_clusters_count || 2} Clusters`, node.x, node.y + node.radius + 25);
+    }
+
+    ctx.restore();
+  }
+
+  ctx.restore(); // Restore camera transform
+  ctx.restore(); // Restore scale
+}
+
+/* ==========================================================================
+   INTERACTIVE TOOLTIP & INSPECTOR DRAWER
+   ========================================================================== */
+function showPainGraphTooltip(node, clientX, clientY) {
+  const tooltip = document.getElementById('pg-hover-tooltip');
+  if (!tooltip) return;
+
+  let typeBadge = '';
+  let metaInfo = '';
+
+  if (node.node_type === 'cluster') {
+    typeBadge = `<span style="background:#8B5CF6; color:#FFF; padding:2px 6px; border-radius:4px; font-weight:700;">🏢 Competitor Cluster</span>`;
+    metaInfo = `<span><b>Market Tier:</b> ${node.tier || 'Enterprise'}</span> • <span><b>Products:</b> ${node.product_count || 0}</span>`;
+  } else if (node.node_type === 'pain_shared') {
+    typeBadge = `<span style="background:#A855F7; color:#FFF; padding:2px 6px; border-radius:4px; font-weight:700;">🔗 Shared Cross-Cluster Pain</span>`;
+    metaInfo = `<span><b>Severity:</b> ⭐ ${node.severity || 8.5}/10</span> • <span><b>Connected:</b> ${node.connected_clusters_count || 2} Groups</span>`;
+  } else if (node.node_type === 'pain_isolated') {
+    typeBadge = `<span style="background:#0284C7; color:#FFF; padding:2px 6px; border-radius:4px; font-weight:700;">🎯 Cluster-Isolated Pain</span>`;
+    metaInfo = `<span><b>Severity:</b> ⭐ ${node.severity || 8.0}/10</span>`;
+  } else if (node.node_type === 'unresolved_omission') {
+    typeBadge = `<span style="background:#E11D48; color:#FFF; padding:2px 6px; border-radius:4px; font-weight:700;">🚨 100% Unresolved Blind Spot</span>`;
+    metaInfo = `<span style="color:#FB7185; font-weight:700;">⚡ ZERO Incumbents Solve This</span> • <span>OSI: ${node.osi_score || 9.2}</span>`;
+  } else if (node.node_type === 'micro_saas_solution') {
+    typeBadge = `<span style="background:#059669; color:#FFF; padding:2px 6px; border-radius:4px; font-weight:700;">🚀 Micro-SaaS Solution</span>`;
+    metaInfo = `<span><b>Pricing:</b> ${node.pricing_strategy || '$49/mo flat'}</span> • <span>OSI: ${node.osi_score || 9.2}</span>`;
+  }
+
+  tooltip.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+      ${typeBadge}
+    </div>
+    <div class="pg-tooltip-title">${node.label}</div>
+    <div class="pg-tooltip-meta">${metaInfo}</div>
+    <div class="pg-tooltip-desc">${node.omission_summary || node.theme || (node.sample_quotes && node.sample_quotes[0]) || 'Click node to inspect deep-dive review citations and disruption dossier.'}</div>
+    <div style="font-size:0.7rem; color:var(--cyan-glow); margin-top:0.4rem;">👉 Click node to open deep-dive dossier</div>
+  `;
+
+  tooltip.classList.remove('hidden');
+  updateTooltipPosition(clientX, clientY);
+}
+
+function updateTooltipPosition(clientX, clientY) {
+  const tooltip = document.getElementById('pg-hover-tooltip');
+  const container = document.getElementById('paingraph-canvas-container');
+  if (!tooltip || !container) return;
+
+  const rect = container.getBoundingClientRect();
+  const relX = clientX - rect.left;
+  const relY = clientY - rect.top;
+
+  tooltip.style.left = `${Math.min(rect.width - 160, Math.max(160, relX))}px`;
+  tooltip.style.top = `${Math.max(80, relY)}px`;
+}
+
+function hidePainGraphTooltip() {
+  const tooltip = document.getElementById('pg-hover-tooltip');
+  if (tooltip) tooltip.classList.add('hidden');
+}
+
+function openPainGraphInspector(node) {
+  const drawer = document.getElementById('paingraph-inspector-drawer');
+  const body = document.getElementById('pg-inspector-body');
+  const typeBadge = document.getElementById('pg-insp-type-badge');
+  const sevBadge = document.getElementById('pg-insp-severity-badge');
+
+  if (!drawer || !body) return;
+
+  drawer.classList.remove('closed');
+
+  // Set Badges
+  if (node.node_type === 'cluster') {
+    typeBadge.innerText = 'Competitor Cluster Hub';
+    typeBadge.style.background = 'rgba(139, 92, 246, 0.2)';
+    typeBadge.style.color = '#C084FC';
+    sevBadge.innerText = `${node.product_count || 0} Products`;
+  } else if (node.node_type === 'pain_shared') {
+    typeBadge.innerText = 'Cross-Cluster Shared Pain';
+    typeBadge.style.background = 'rgba(168, 85, 247, 0.2)';
+    typeBadge.style.color = '#E9D5FF';
+    sevBadge.innerText = `Severity: ${node.severity || 8.5} / 10`;
+  } else if (node.node_type === 'unresolved_omission') {
+    typeBadge.innerText = '🚨 100% Unresolved Systemic Omission';
+    typeBadge.style.background = 'rgba(244, 63, 94, 0.25)';
+    typeBadge.style.color = '#FECDD3';
+    sevBadge.innerText = '0 Cluster Solutions';
+  } else if (node.node_type === 'micro_saas_solution') {
+    typeBadge.innerText = '🚀 Disruptive Micro-SaaS Venture';
+    typeBadge.style.background = 'rgba(16, 185, 129, 0.25)';
+    typeBadge.style.color = '#A7F3D0';
+    sevBadge.innerText = `OSI: ${node.osi_score || 9.2} / 10`;
+  } else {
+    typeBadge.innerText = 'Cluster-Isolated Pain';
+    typeBadge.style.background = 'rgba(56, 189, 248, 0.2)';
+    typeBadge.style.color = '#BAE6FD';
+    sevBadge.innerText = `Severity: ${node.severity || 8.0} / 10`;
+  }
+
+  // Render Body Details
+  let html = `<div class="pg-insp-title">${node.label}</div>`;
+
+  if (node.node_type === 'cluster') {
+    html += `
+      <div class="pg-insp-summary-box">
+        <div class="pg-insp-section-title">Archetype Strategy & Theme</div>
+        <p style="margin:0 0 0.5rem 0;">${node.theme || 'Deeply integrated suite targeting high-volume workflows.'}</p>
+        <div style="font-size:0.75rem; color:var(--text-muted);"><b>Target Tier:</b> ${node.tier || 'Enterprise'}</div>
+      </div>
+
+      <div>
+        <div class="pg-insp-section-title">Products in this Cluster (${node.product_count})</div>
+        <div class="pg-insp-cluster-pills">
+          ${(node.product_slugs || []).map(p => `
+            <span class="pg-cluster-pill" style="background:rgba(139, 92, 246, 0.2); color:#E9D5FF; border-color:rgba(139, 92, 246, 0.4);">
+              📦 ${p.replace(/-/g, ' ').toUpperCase()}
+            </span>
+          `).join('')}
+        </div>
+      </div>
+
+      <div>
+        <div class="pg-insp-section-title">Common Cluster Pains Experienced by Buyers</div>
+        <ul style="padding-left:1.2rem; margin:0; font-size:0.8rem; color:var(--text-secondary); line-height:1.5;">
+          ${(node.common_pains || ['Prohibitive per-seat pricing scaling.', 'Complex administrative overhead.']).map(cp => `<li>${cp}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  } else if (node.node_type === 'pain_shared' || node.node_type === 'pain_isolated') {
+    html += `
+      <div class="pg-insp-summary-box">
+        <div class="pg-insp-section-title">Pain Dimension: ${node.dimension || 'GENERAL'}</div>
+        <p style="margin:0;">Structural friction identified across G2/Capterra reviews with high customer churn intent.</p>
+      </div>
+
+      <div>
+        <div class="pg-insp-section-title">Connected Incumbent Clusters (${(node.connected_clusters || []).length})</div>
+        <div class="pg-insp-cluster-pills">
+          ${(node.connected_clusters || []).map(cId => `
+            <span class="pg-cluster-pill" style="background:rgba(168, 85, 247, 0.2); color:#E9D5FF; border-color:rgba(168, 85, 247, 0.4);">
+              🏢 ${cId.replace(/-/g, ' ').toUpperCase()}
+            </span>
+          `).join('')}
+        </div>
+      </div>
+
+      <div>
+        <div class="pg-insp-section-title">Verbatim Customer Dissatisfaction Citations (${(node.sample_quotes || []).length})</div>
+        <div class="pg-insp-quotes-list">
+          ${(node.sample_quotes && node.sample_quotes.length > 0 ? node.sample_quotes : [
+            '"Per-seat pricing means we have to share logins, which breaks accountability and compliance."',
+            '"The interface takes forever to load, and navigating between ticket views adds hours of wasted time per week."'
+          ]).map(quote => `<div class="pg-insp-quote-card">${quote}</div>`).join('')}
+        </div>
+      </div>
+    `;
+  } else if (node.node_type === 'unresolved_omission' || node.node_type === 'micro_saas_solution') {
+    const opp = node;
+    html += `
+      <div class="pg-insp-summary-box" style="border-color:rgba(244, 63, 94, 0.35); background:rgba(244, 63, 94, 0.05);">
+        <div class="pg-insp-section-title" style="color:#FB7185;">🚨 Systemic Omission (Why Incumbents Fail)</div>
+        <p style="margin:0; line-height:1.5;">${opp.omission_summary || 'All incumbent clusters ignore this unaddressed segment due to enterprise legacy architecture and per-seat sales incentives.'}</p>
+      </div>
+
+      <div class="pg-insp-venture-card">
+        <div class="pg-insp-venture-title">🚀 Micro-SaaS Unbundling Wedge</div>
+        <div class="pg-insp-wedge-text">"${opp.unbundling_wedge || 'Laser-focused flat-rate alternative built for agile operators.'}"</div>
+        <div class="pg-insp-meta-row">
+          <span>🎯 <b>Target ICP:</b> ${opp.target_icp || 'Agile SMBs & Founders'}</span>
+          <span style="color:var(--emerald-glow); font-weight:700;">💰 ${opp.pricing_strategy || '$39/mo flat'}</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="pg-insp-section-title">Attacked Competitor Clusters</div>
+        <div class="pg-insp-cluster-pills">
+          ${(opp.attacked_cluster_slugs || ['enterprise-suites', 'conversational-platforms']).map(cId => `
+            <span class="pg-cluster-pill" style="background:rgba(244, 63, 94, 0.15); color:#FECDD3; border-color:rgba(244, 63, 94, 0.35);">
+              ⚔️ Attacks: ${cId.replace(/-/g, ' ').toUpperCase()}
+            </span>
+          `).join('')}
+        </div>
+      </div>
+
+      ${opp.core_features && opp.core_features.length > 0 ? `
+        <div>
+          <div class="pg-insp-section-title">MVP Core Features (Zero Bloat)</div>
+          <ul style="padding-left:1.2rem; margin:0; font-size:0.8rem; color:var(--text-secondary); line-height:1.5;">
+            ${opp.core_features.map(f => `<li>✓ ${f}</li>`).join('')}
+          </ul>
+        </div>
+      ` : ''}
+
+      ${opp.search_demand_keywords && opp.search_demand_keywords.length > 0 ? `
+        <div>
+          <div class="pg-insp-section-title">📈 Live Google SEO Demand Validation</div>
+          <div style="display:flex; flex-direction:column; gap:0.4rem;">
+            ${opp.search_demand_keywords.slice(0, 3).map(kw => {
+              const kwName = typeof kw === 'object' ? (kw.verified_root_query || kw.keyword) : kw;
+              const vol = typeof kw === 'object' && kw.monthly_search_volume ? `${Number(kw.monthly_search_volume).toLocaleString()} /mo` : '< 10 /mo';
+              return `
+                <div style="display:flex; justify-content:space-between; font-size:0.78rem; background:rgba(0,0,0,0.3); padding:0.4rem 0.6rem; border-radius:6px;">
+                  <span style="color:#FFF;">🔍 ${kwName}</span>
+                  <span style="color:var(--emerald-glow); font-weight:700;">${vol}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      ` : ''}
+    `;
+  }
+
+  body.innerHTML = html;
+}
+
+function closePainGraphInspector() {
+  const drawer = document.getElementById('paingraph-inspector-drawer');
+  if (drawer) drawer.classList.add('closed');
+  pgSelectedNode = null;
+}
+
+/* ==========================================================================
+   TOOLBAR FILTER & SIMULATION CONTROLS
+   ========================================================================== */
+function filterPainGraph(filterType) {
+  pgActiveFilter = filterType;
+
+  ['all', 'shared', 'omissions', 'isolated'].forEach(f => {
+    const btn = document.getElementById(`pg-flt-${f}`);
+    if (btn) {
+      if (f === filterType) btn.classList.add('active');
+      else btn.classList.remove('active');
+    }
+  });
+}
+
+function filterPainGraphByCluster(clusterSlug) {
+  pgSelectedCluster = clusterSlug;
+}
+
+function searchPainGraph(query) {
+  pgSearchQuery = query.trim();
+}
+
+function toggleGraphPhysics() {
+  pgIsPhysicsRunning = !pgIsPhysicsRunning;
+  const btn = document.getElementById('pg-btn-physics');
+  if (btn) {
+    btn.innerText = pgIsPhysicsRunning ? '⏸️ Physics' : '▶️ Physics';
+    btn.style.borderColor = pgIsPhysicsRunning ? 'rgba(255,255,255,0.12)' : 'rgba(244,63,94,0.6)';
+  }
+}
+
+function resetGraphCamera() {
+  pgCamera = { x: 0, y: 0, zoom: 1 };
+}
+
+function zoomGraph(factor) {
+  pgCamera.zoom = Math.max(0.4, Math.min(2.5, pgCamera.zoom * factor));
+}
+
 

@@ -124,6 +124,11 @@
           <span class="tab-label">Competitor Clusters & White Space</span>
           <span class="tab-badge" style="background:rgba(168,85,247,0.2); color:var(--purple-glow); border-color:rgba(168,85,247,0.4);" id="whitespace-count-badge">White Space Matrix</span>
         </button>
+        <button class="view-tab-btn" id="tab-btn-paingraph" onclick="switchMainView('paingraph')">
+          <span class="tab-icon">🕸️</span>
+          <span class="tab-label">Pain Network & Omission Matrix</span>
+          <span class="tab-badge" style="background:rgba(244,63,94,0.2); color:var(--rose-glow); border-color:rgba(244,63,94,0.4);" id="paingraph-count-badge">Systemic Blind Spots</span>
+        </button>
       </div>
       <div class="view-nav-stats">
         <span class="live-dot"></span>
@@ -502,6 +507,116 @@
         </div>
         <div id="whitespace-opportunities-grid" class="whitespace-grid">
           <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. CROSS-CLUSTER PAIN NETWORK & UNRESOLVED OMISSION MATRIX VIEW -->
+    <section id="paingraph-view-section" class="paingraph-view-section hidden">
+      <!-- HEADER & CONTROLS -->
+      <div class="paingraph-header-card">
+        <div class="paingraph-header-top">
+          <div class="paingraph-title-block">
+            <div class="paingraph-pulse-orb">🕸️</div>
+            <div>
+              <h2>Cross-Cluster Pain Network & Unresolved Omission Matrix</h2>
+              <p>Interactive Multi-Cluster Graph exposing shared structural pain points and <span style="color:var(--rose-glow); font-weight:700;">100% unaddressed blind spots</span> (White Space Vacuums left unsolved by all incumbents).</p>
+            </div>
+          </div>
+          <div class="paingraph-cat-badge-box">
+            <span class="paingraph-cat-label">Active Subcategory</span>
+            <div class="paingraph-cat-pill" id="pg-active-cat-name">Help Desk Software</div>
+          </div>
+        </div>
+
+        <!-- TELEMETRY METRIC STATS -->
+        <div class="paingraph-stats-bar">
+          <div class="pg-stat-item">
+            <span class="pg-stat-val purple" id="pg-stat-clusters">--</span>
+            <span class="pg-stat-lbl">🏢 Competitor Clusters</span>
+          </div>
+          <div class="pg-stat-item">
+            <span class="pg-stat-val cyan" id="pg-stat-shared">--</span>
+            <span class="pg-stat-lbl">🔗 Cross-Cluster Shared Pains</span>
+          </div>
+          <div class="pg-stat-item">
+            <span class="pg-stat-val blue" id="pg-stat-isolated">--</span>
+            <span class="pg-stat-lbl">🎯 Cluster-Isolated Pains</span>
+          </div>
+          <div class="pg-stat-item beacon-stat">
+            <span class="pg-stat-val rose" id="pg-stat-omissions">--</span>
+            <span class="pg-stat-lbl">🚨 100% Unresolved Blind Spots</span>
+          </div>
+          <div class="pg-stat-item">
+            <span class="pg-stat-val emerald" id="pg-stat-solutions">--</span>
+            <span class="pg-stat-lbl">🚀 Micro-SaaS Wedges</span>
+          </div>
+        </div>
+
+        <!-- FILTER & GRAPH CONTROLS -->
+        <div class="paingraph-controls-bar">
+          <div class="pg-filter-group">
+            <button class="pg-filter-btn active" id="pg-flt-all" onclick="filterPainGraph('all')">🌟 All Nodes & Links</button>
+            <button class="pg-filter-btn" id="pg-flt-shared" onclick="filterPainGraph('shared')">🔗 Cross-Cluster Shared Only</button>
+            <button class="pg-filter-btn beacon-btn" id="pg-flt-omissions" onclick="filterPainGraph('omissions')">🚨 Unresolved Blind Spots (White Space)</button>
+            <button class="pg-filter-btn" id="pg-flt-isolated" onclick="filterPainGraph('isolated')">🎯 Cluster-Isolated</button>
+          </div>
+
+          <div class="pg-search-and-cluster">
+            <div class="pg-search-box">
+              <span>🔍</span>
+              <input type="text" id="pg-search-input" placeholder="Search pain points, reviews, keywords..." oninput="searchPainGraph(this.value)">
+            </div>
+            <select id="pg-cluster-select" class="pg-select" onchange="filterPainGraphByCluster(this.value)">
+              <option value="all">🏢 All Clusters</option>
+            </select>
+          </div>
+
+          <div class="pg-physics-controls">
+            <button class="pg-tool-btn" id="pg-btn-physics" onclick="toggleGraphPhysics()" title="Pause/Resume Force Simulation">⏸️ Physics</button>
+            <button class="pg-tool-btn" onclick="resetGraphCamera()" title="Reset Zoom & Pan">🔄 Reset</button>
+            <button class="pg-tool-btn" onclick="zoomGraph(1.25)" title="Zoom In">🔍+</button>
+            <button class="pg-tool-btn" onclick="zoomGraph(0.8)" title="Zoom Out">🔍-</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRAPH VIEWPORT CONTAINER -->
+      <div class="paingraph-stage-wrapper">
+        <div class="paingraph-canvas-container" id="paingraph-canvas-container">
+          <canvas id="pain-network-canvas"></canvas>
+
+          <!-- INTERACTIVE HOVER TOOLTIP -->
+          <div id="pg-hover-tooltip" class="pg-hover-tooltip hidden"></div>
+
+          <!-- MAP LEGEND OVERLAY -->
+          <div class="paingraph-legend-overlay">
+            <div class="pg-legend-title">🎨 Graph Legend</div>
+            <div class="pg-legend-items">
+              <div class="pg-legend-row"><span class="pg-dot cluster-dot"></span><span>🏢 Competitor Cluster Hub</span></div>
+              <div class="pg-legend-row"><span class="pg-dot shared-dot"></span><span>🔗 Cross-Cluster Shared Pain (Contagion)</span></div>
+              <div class="pg-legend-row"><span class="pg-dot isolated-dot"></span><span>🎯 Cluster-Isolated Pain</span></div>
+              <div class="pg-legend-row"><span class="pg-dot omission-dot pulse-dot"></span><span>🚨 100% Unresolved Blind Spot (0 Solved)</span></div>
+              <div class="pg-legend-row"><span class="pg-dot solution-dot"></span><span>🚀 Micro-SaaS Unbundling Wedge</span></div>
+            </div>
+          </div>
+
+          <!-- INTERACTIVE DEEP-DIVE INSPECTOR DRAWER -->
+          <div id="paingraph-inspector-drawer" class="paingraph-inspector-drawer closed">
+            <div class="pg-inspector-header">
+              <div class="pg-insp-badge-row">
+                <span id="pg-insp-type-badge" class="pg-insp-type-badge">Node Inspector</span>
+                <span id="pg-insp-severity-badge" class="pg-insp-severity-badge">Severity: 9.0</span>
+              </div>
+              <button class="pg-insp-close" onclick="closePainGraphInspector()">&times;</button>
+            </div>
+            
+            <div class="pg-inspector-body" id="pg-inspector-body">
+              <div style="text-align:center; padding:3rem 1rem; color:var(--text-secondary);">
+                Select any Cluster Hub, Shared Pain, or Unresolved Blind Spot to inspect deep-dive customer evidence and Micro-SaaS wedge solutions.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

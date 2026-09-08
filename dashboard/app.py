@@ -554,6 +554,22 @@ def get_whitespace_opportunities(category_slug: Optional[str] = None):
 
     return opps
 
+@app.get("/api/cluster-pain-graph")
+def get_cluster_pain_graph(category_slug: Optional[str] = None):
+    """
+    Returns an interactive node-link graph model showing:
+    - Competitor Archetype Clusters
+    - Shared Cross-Cluster Pain Points (Bridges)
+    - Cluster-Isolated Pain Points
+    - 100% Unresolved Systemic Blind Spots (White Space Omissions with 0 cluster solutions)
+    - Micro-SaaS Unbundling Solutions
+    """
+    cat_slug = category_slug or "help-desk"
+    from pipeline.pain_graph_builder import PainGraphBuilder
+    builder = PainGraphBuilder(db=db)
+    return builder.generate_category_pain_graph(cat_slug)
+
+
 @app.post("/api/cluster-and-mine")
 def trigger_cluster_and_whitespace_mine(req: MineRequest):
     """
