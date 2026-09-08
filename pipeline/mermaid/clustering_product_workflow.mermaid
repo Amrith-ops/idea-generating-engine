@@ -1,0 +1,24 @@
+flowchart TD
+    subgraph Step1 ["Step 1: Exhaustive Discovery & Feature Scraping"]
+        A[G2 Sub-Category e.g. Help Desk] --> B[Discover 6-12+ Products]
+        B --> C[Extract Feature Tag Matrices e.g. Ticketing, SLA, Chat, BYOK]
+    end
+
+    subgraph Step2 ["Step 2: Multi-Signal Competitor Clustering"]
+        C --> D[Compute 5-Signal Similarity Matrix]
+        D --> E[Form 2-4 Strategic Competitor Clusters\n1. Enterprise Suites\n2. Next-Gen Conversational\n3. Lean / SMB Desks]
+    end
+
+    subgraph Step3 ["Step 3: Pain Differential & Omission Analysis"]
+        E --> F[Aggregate Negative Reviews per Cluster]
+        F --> G{Is Cluster 1's pain solved by Cluster 2?}
+        G -->|Yes| H[Intra-Market Feature Competition]
+        G -->|No| I[🚨 Systemic Omission / Blind Spot\nUnaddressed by ALL clusters]
+    end
+
+    subgraph Step4 ["Step 4: Micro-SaaS Synthesis & SEO Validation"]
+        I --> J[Synthesize High-Conviction Micro-SaaS Wedge]
+        J --> K[Phase 3: Live Google Autocomplete SEO Validation]
+        K --> L[Extract Monthly Volume, YoY Growth & CPC]
+        L --> M[Persist to PostgreSQL & Render in Command Center UI]
+    end
