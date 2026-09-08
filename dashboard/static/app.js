@@ -2063,8 +2063,8 @@ async function loadPainGraphView(categorySlug) {
 
 function setupPainGraphData(rawNodes, rawEdges) {
   const container = document.getElementById('paingraph-canvas-container');
-  const width = container ? container.clientWidth : 1000;
-  const height = container ? container.clientHeight : 700;
+  const width = container ? container.clientWidth : 1200;
+  const height = container ? container.clientHeight : 880;
   const centerX = width / 2;
   const centerY = height / 2;
 
@@ -2074,68 +2074,87 @@ function setupPainGraphData(rawNodes, rawEdges) {
   const omissionNodes = rawNodes.filter(n => n.node_type === 'unresolved_omission');
   const solutionNodes = rawNodes.filter(n => n.node_type === 'micro_saas_solution');
 
-  // Place Cluster Hubs evenly on a central circle
-  const clusterRadius = 180;
+  // Place Cluster Hubs evenly on a wide central ring with medium spacious distance (radius 340)
+  const clusterRadius = 340;
   clusterNodes.forEach((c, i) => {
     const angle = (i / Math.max(1, clusterNodes.length)) * Math.PI * 2 - Math.PI / 2;
     c.x = centerX + Math.cos(angle) * clusterRadius;
     c.y = centerY + Math.sin(angle) * clusterRadius;
     c.vx = 0;
     c.vy = 0;
-    c.radius = 28 + (c.product_count || 2) * 3;
-    c.mass = 4.0;
+    c.radius = 32 + (c.product_count || 2) * 3;
+    c.mass = 5.0;
   });
 
-  // Place Shared Pains between clusters
+  // Place Shared Pains cleanly along the chord bridges between their parent clusters
   sharedPainNodes.forEach((sp, i) => {
-    const angle = (i / Math.max(1, sharedPainNodes.length)) * Math.PI * 2;
-    sp.x = centerX + Math.cos(angle) * 70 + (Math.random() - 0.5) * 40;
-    sp.y = centerY + Math.sin(angle) * 70 + (Math.random() - 0.5) * 40;
+    const cIds = sp.connected_clusters || [];
+    let midX = centerX;
+    let midY = centerY;
+
+    if (cIds.length >= 2) {
+      const c1 = clusterNodes.find(c => c.id === cIds[0]) || clusterNodes[0];
+      const c2 = clusterNodes.find(c => c.id === cIds[1]) || clusterNodes[1] || c1;
+      midX = (c1.x + c2.x) / 2;
+      midY = (c1.y + c2.y) / 2;
+    } else {
+      const angle = (i / Math.max(1, sharedPainNodes.length)) * Math.PI * 2;
+      midX = centerX + Math.cos(angle) * 140;
+      midY = centerY + Math.sin(angle) * 140;
+    }
+
+    // Offset slightly towards the center so chord lines remain distinct
+    sp.x = midX * 0.88 + (Math.sin(i * 2.3) * 35);
+    sp.y = midY * 0.88 + (Math.cos(i * 2.3) * 35);
     sp.vx = 0;
     sp.vy = 0;
-    sp.radius = 18 + (sp.connected_clusters_count || 2) * 2;
-    sp.mass = 2.0;
+    sp.radius = 20 + (sp.connected_clusters_count || 2) * 2;
+    sp.mass = 2.5;
   });
 
-  // Place Isolated Pains near their respective clusters
+  // Place Isolated Pains in a clean outward halo behind their respective cluster
   isolatedPainNodes.forEach((ip, i) => {
     const parentClusterId = ip.connected_clusters && ip.connected_clusters[0];
     const parent = clusterNodes.find(c => c.id === parentClusterId) || clusterNodes[0];
     const parentX = parent ? parent.x : centerX;
     const parentY = parent ? parent.y : centerY;
-    const offsetAngle = (i * 1.5) + Math.random();
-    ip.x = parentX + Math.cos(offsetAngle) * 90;
-    ip.y = parentY + Math.sin(offsetAngle) * 90;
+    
+    // Calculate outward angle away from graph center
+    const outwardAngle = Math.atan2(parentY - centerY, parentX - centerX) + ((i % 3) - 1) * 0.45;
+    ip.x = parentX + Math.cos(outwardAngle) * 150;
+    ip.y = parentY + Math.sin(outwardAngle) * 150;
     ip.vx = 0;
     ip.vy = 0;
-    ip.radius = 16;
-    ip.mass = 1.5;
+    ip.radius = 18;
+    ip.mass = 1.8;
   });
 
-  // Place 100% Unresolved Blind Spots orbiting in the outer white space perimeter
-  const omissionRadius = 310;
+  // Place 100% Unresolved Blind Spots in a dedicated, spacious outer orbit (radius 620)
+  const omissionRadius = 600;
   omissionNodes.forEach((om, i) => {
-    const angle = (i / Math.max(1, omissionNodes.length)) * Math.PI * 2 + 0.3;
+    const angle = (i / Math.max(1, omissionNodes.length)) * Math.PI * 2 + 0.25;
     om.x = centerX + Math.cos(angle) * omissionRadius;
     om.y = centerY + Math.sin(angle) * omissionRadius;
     om.vx = 0;
     om.vy = 0;
-    om.radius = 22;
-    om.mass = 2.5;
+    om.radius = 24;
+    om.mass = 3.0;
     om.pulsePhase = i * 0.8;
   });
 
-  // Place Micro-SaaS Solutions satellite pairs just outside each Omission
+  // Place Micro-SaaS Solutions satellite pairs just outside each Omission (80px separation)
   solutionNodes.forEach((sol, i) => {
     const matchOmission = omissionNodes[i % Math.max(1, omissionNodes.length)];
-    const omX = matchOmission ? matchOmission.x : centerX + 260;
-    const omY = matchOmission ? matchOmission.y : centerY + 260;
-    sol.x = omX + 45;
-    sol.y = omY + 45;
+    const omX = matchOmission ? matchOmission.x : centerX + 500;
+    const omY = matchOmission ? matchOmission.y : centerY + 500;
+    
+    const angleOut = Math.atan2(omY - centerY, omX - centerX);
+    sol.x = omX + Math.cos(angleOut) * 80;
+    sol.y = omY + Math.sin(angleOut) * 80;
     sol.vx = 0;
     sol.vy = 0;
-    sol.radius = 20;
-    sol.mass = 1.8;
+    sol.radius = 22;
+    sol.mass = 2.0;
   });
 
   pgNodes = [...clusterNodes, ...sharedPainNodes, ...isolatedPainNodes, ...omissionNodes, ...solutionNodes];
@@ -2228,10 +2247,10 @@ function initPainGraphCanvas() {
     pgIsDragging = false;
   });
 
-  // ZOOM WITH WHEEL
+  // ZOOM WITH WHEEL & TRACKPAD PINCH
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+    const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
     zoomGraph(zoomFactor);
   }, { passive: false });
 }
@@ -2246,8 +2265,8 @@ function getCanvasMousePos(e, canvas) {
 
 function screenToWorldPos(screenPos) {
   const container = document.getElementById('paingraph-canvas-container');
-  const w = container ? container.clientWidth : 1000;
-  const h = container ? container.clientHeight : 700;
+  const w = container ? container.clientWidth : 1200;
+  const h = container ? container.clientHeight : 880;
   const cx = w / 2;
   const cy = h / 2;
 
@@ -2263,7 +2282,7 @@ function findNodeAt(worldX, worldY) {
     if (!isNodeVisible(node)) continue;
     const dx = node.x - worldX;
     const dy = node.y - worldY;
-    if (Math.hypot(dx, dy) <= node.radius + 6) {
+    if (Math.hypot(dx, dy) <= node.radius + 8) {
       return node;
     }
   }
@@ -2317,12 +2336,12 @@ function painGraphRenderLoop(timestamp) {
 
 function updatePainGraphPhysics() {
   const container = document.getElementById('paingraph-canvas-container');
-  const width = container ? container.clientWidth : 1000;
-  const height = container ? container.clientHeight : 700;
+  const width = container ? container.clientWidth : 1200;
+  const height = container ? container.clientHeight : 880;
   const centerX = width / 2;
   const centerY = height / 2;
 
-  // 1. Multi-body Coulomb Repulsion
+  // 1. Multi-body Coulomb Repulsion with wide collision buffer (minDist 80px)
   for (let i = 0; i < pgNodes.length; i++) {
     const n1 = pgNodes[i];
     for (let j = i + 1; j < pgNodes.length; j++) {
@@ -2330,10 +2349,10 @@ function updatePainGraphPhysics() {
       const dx = n2.x - n1.x;
       const dy = n2.y - n1.y;
       const dist = Math.hypot(dx, dy) || 1;
-      const minDist = n1.radius + n2.radius + 35;
+      const minDist = n1.radius + n2.radius + 80;
 
-      if (dist < 380) {
-        const force = (dist < minDist) ? (minDist - dist) * 0.12 : (1200 / (dist * dist));
+      if (dist < 650) {
+        const force = (dist < minDist) ? (minDist - dist) * 0.14 : (2200 / (dist * dist));
         const fx = (dx / dist) * force;
         const fy = (dy / dist) * force;
 
@@ -2345,7 +2364,7 @@ function updatePainGraphPhysics() {
     }
   }
 
-  // 2. Hooke's Spring Attraction along Edges
+  // 2. Hooke's Spring Attraction along Edges with medium spacious lengths
   for (const edge of pgEdges) {
     const s = edge.sourceNode;
     const t = edge.targetNode;
@@ -2354,8 +2373,10 @@ function updatePainGraphPhysics() {
     const dx = t.x - s.x;
     const dy = t.y - s.y;
     const dist = Math.hypot(dx, dy) || 1;
-    const idealDist = edge.link_type === 'solution_wedge' ? 55 : (edge.is_shared ? 140 : 110);
-    const force = (dist - idealDist) * 0.008;
+    const idealDist = edge.link_type === 'solution_wedge' ? 80 : 
+                     (edge.link_type === 'unresolved_gap' ? 340 : 
+                     (edge.is_shared ? 230 : 160));
+    const force = (dist - idealDist) * 0.006;
 
     const fx = (dx / dist) * force;
     const fy = (dy / dist) * force;
@@ -2366,19 +2387,18 @@ function updatePainGraphPhysics() {
     t.vy -= fy / t.mass;
   }
 
-  // 3. Central Gravity & Cluster Anchors
+  // 3. Central Gravity & Cluster Anchors (gentle pull to maintain shape)
   for (const node of pgNodes) {
     const dx = centerX - node.x;
     const dy = centerY - node.y;
-    const dist = Math.hypot(dx, dy) || 1;
-    const grav = (node.node_type === 'cluster') ? 0.004 : (node.node_type === 'unresolved_omission' ? 0.001 : 0.002);
+    const grav = (node.node_type === 'cluster') ? 0.003 : (node.node_type === 'unresolved_omission' ? 0.0008 : 0.0015);
 
     node.vx += dx * grav;
     node.vy += dy * grav;
 
-    // Velocity integration & damping
-    node.vx *= 0.86;
-    node.vy *= 0.86;
+    // Smooth velocity integration & damping
+    node.vx *= 0.84;
+    node.vy *= 0.84;
 
     node.x += node.vx;
     node.y += node.vy;
@@ -2404,7 +2424,7 @@ function renderPainGraph(timestamp = 0) {
 
   // Background Grid Effect
   ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
-  const gridSize = 40;
+  const gridSize = 45;
   for (let x = (centerX + pgCamera.x * pgCamera.zoom) % gridSize; x < width; x += gridSize) {
     for (let y = (centerY + pgCamera.y * pgCamera.zoom) % gridSize; y < height; y += gridSize) {
       ctx.fillRect(x, y, 1.5, 1.5);
@@ -2437,40 +2457,40 @@ function renderPainGraph(timestamp = 0) {
     ctx.beginPath();
     ctx.moveTo(s.x, s.y);
 
-    // Subtle curve
-    const midX = (s.x + t.x) / 2 + (s.y - t.y) * 0.08;
-    const midY = (s.y + t.y) / 2 + (t.x - s.x) * 0.08;
+    // Smooth subtle curve
+    const midX = (s.x + t.x) / 2 + (s.y - t.y) * 0.06;
+    const midY = (s.y + t.y) / 2 + (t.x - s.x) * 0.06;
     ctx.quadraticCurveTo(midX, midY, t.x, t.y);
 
     if (edge.link_type === 'unresolved_gap') {
       // Dashed Vulnerability Line (Red/Pink Laser)
-      ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = isHighlighted ? 'rgba(244, 63, 94, 0.9)' : (isDimmed ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.35)');
-      ctx.lineWidth = isHighlighted ? 2.5 : 1.2;
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = isHighlighted ? 'rgba(244, 63, 94, 0.95)' : (isDimmed ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.35)');
+      ctx.lineWidth = isHighlighted ? 2.8 : 1.4;
     } else if (edge.link_type === 'solution_wedge') {
       // Solid Emerald Wedge Line
-      ctx.strokeStyle = isHighlighted ? '#10B981' : (isDimmed ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.7)');
-      ctx.lineWidth = isHighlighted ? 3 : 2;
+      ctx.strokeStyle = isHighlighted ? '#10B981' : (isDimmed ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.75)');
+      ctx.lineWidth = isHighlighted ? 3.2 : 2.2;
     } else if (edge.is_shared) {
       // Glowing Purple Cross-Cluster Shared Bridge
       ctx.strokeStyle = isHighlighted ? '#C084FC' : (isDimmed ? 'rgba(168, 85, 247, 0.12)' : 'rgba(168, 85, 247, 0.45)');
-      ctx.lineWidth = isHighlighted ? 3 : 1.8;
+      ctx.lineWidth = isHighlighted ? 3.2 : 2.0;
     } else {
       // Cluster-Isolated Pain Link
-      ctx.strokeStyle = isHighlighted ? '#38BDF8' : (isDimmed ? 'rgba(56, 189, 248, 0.1)' : 'rgba(56, 189, 248, 0.3)');
-      ctx.lineWidth = isHighlighted ? 2.2 : 1.2;
+      ctx.strokeStyle = isHighlighted ? '#38BDF8' : (isDimmed ? 'rgba(56, 189, 248, 0.1)' : 'rgba(56, 189, 248, 0.32)');
+      ctx.lineWidth = isHighlighted ? 2.4 : 1.4;
     }
 
     ctx.stroke();
 
     // Moving energy photon pulse along edges
     if (!isDimmed && (edge.is_shared || edge.link_type === 'solution_wedge' || isHighlighted)) {
-      const pulseProgress = (tSec * 0.6 + (edge.weight || 1) * 0.2) % 1;
+      const pulseProgress = (tSec * 0.5 + (edge.weight || 1) * 0.2) % 1;
       const qx = (1 - pulseProgress) * (1 - pulseProgress) * s.x + 2 * (1 - pulseProgress) * pulseProgress * midX + pulseProgress * pulseProgress * t.x;
       const qy = (1 - pulseProgress) * (1 - pulseProgress) * s.y + 2 * (1 - pulseProgress) * pulseProgress * midY + pulseProgress * pulseProgress * t.y;
 
       ctx.beginPath();
-      ctx.arc(qx, qy, edge.is_shared ? 3 : 2.5, 0, Math.PI * 2);
+      ctx.arc(qx, qy, edge.is_shared ? 3.5 : 2.8, 0, Math.PI * 2);
       ctx.fillStyle = edge.color || '#FFF';
       ctx.shadowColor = edge.color || '#FFF';
       ctx.shadowBlur = 8;
@@ -2498,8 +2518,8 @@ function renderPainGraph(timestamp = 0) {
     // A. 100% UNRESOLVED BLIND SPOT (PULSATILE BEACON RINGS)
     if (node.node_type === 'unresolved_omission') {
       const phase = (tSec * 2 + (node.pulsePhase || 0)) % (Math.PI * 2);
-      const ringRadius = node.radius + 6 + Math.sin(phase) * 8;
-      const ringAlpha = Math.max(0, 0.6 - (ringRadius - node.radius) / 24);
+      const ringRadius = node.radius + 8 + Math.sin(phase) * 10;
+      const ringAlpha = Math.max(0, 0.65 - (ringRadius - node.radius) / 28);
 
       ctx.beginPath();
       ctx.arc(node.x, node.y, ringRadius, 0, Math.PI * 2);
@@ -2508,7 +2528,7 @@ function renderPainGraph(timestamp = 0) {
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius + 14 + Math.sin(phase + 1) * 6, 0, Math.PI * 2);
+      ctx.arc(node.x, node.y, node.radius + 18 + Math.sin(phase + 1) * 8, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(244, 63, 94, ${ringAlpha * 0.5})`;
       ctx.lineWidth = 1;
       ctx.stroke();
@@ -2567,26 +2587,65 @@ function renderPainGraph(timestamp = 0) {
 
     ctx.fillText(icon, node.x, node.y + 1);
 
-    // E. NODE LABELS (RENDERED UNDER/OVER NODE)
-    ctx.font = node.node_type === 'cluster' ? 'bold 12px Inter, sans-serif' : '10px Inter, sans-serif';
+    // E. CRISP CHIP LABELS (RENDERED WITH SEMI-TRANSPARENT BACKGROUND TO PREVENT CLUTTER)
+    ctx.font = node.node_type === 'cluster' ? 'bold 12px Inter, sans-serif' : '11px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#FFF';
-    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur = 4;
+    ctx.textBaseline = 'middle';
 
-    const label = node.label || '';
-    const displayLabel = label.length > 26 ? label.substring(0, 24) + '...' : label;
-    ctx.fillText(displayLabel, node.x, node.y + node.radius + 14);
+    const rawLabel = node.label || '';
+    const displayLabel = rawLabel.length > 28 ? rawLabel.substring(0, 26) + '...' : rawLabel;
+    const textMetrics = ctx.measureText(displayLabel);
+    const chipPadX = 8;
+    const chipHeight = 20;
+    const chipX = node.x - textMetrics.width / 2 - chipPadX;
+    const chipY = node.y + node.radius + 7;
+
+    // Draw Glassmorphic Pill Chip
+    ctx.fillStyle = 'rgba(6, 9, 17, 0.90)';
+    ctx.strokeStyle = isSelected ? '#FFF' : (node.node_type === 'unresolved_omission' ? 'rgba(244, 63, 94, 0.45)' : (node.node_type === 'cluster' ? 'rgba(139, 92, 246, 0.45)' : 'rgba(255, 255, 255, 0.12)'));
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(chipX, chipY, textMetrics.width + chipPadX * 2, chipHeight, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw Label Text
+    ctx.fillStyle = node.node_type === 'unresolved_omission' ? '#FECDD3' : '#F8FAFC';
+    ctx.fillText(displayLabel, node.x, chipY + chipHeight / 2);
 
     // Sub-badge for Unresolved Omissions / Shared Pains
     if (node.node_type === 'unresolved_omission') {
+      const subText = '⚡ 0 Solved (Systemic Gap)';
       ctx.font = 'bold 9px Inter, sans-serif';
+      const subMetrics = ctx.measureText(subText);
+      const subY = chipY + chipHeight + 3;
+      const subX = node.x - subMetrics.width / 2 - 6;
+
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.25)';
+      ctx.strokeStyle = 'rgba(244, 63, 94, 0.55)';
+      ctx.beginPath();
+      ctx.roundRect(subX, subY, subMetrics.width + 12, 16, 4);
+      ctx.fill();
+      ctx.stroke();
+
       ctx.fillStyle = '#FB7185';
-      ctx.fillText('⚡ 0 Solved (Systemic Gap)', node.x, node.y + node.radius + 26);
+      ctx.fillText(subText, node.x, subY + 8);
     } else if (node.node_type === 'pain_shared') {
+      const subText = `🔗 Shared by ${node.connected_clusters_count || 2} Groups`;
       ctx.font = '9px Inter, sans-serif';
+      const subMetrics = ctx.measureText(subText);
+      const subY = chipY + chipHeight + 3;
+      const subX = node.x - subMetrics.width / 2 - 6;
+
+      ctx.fillStyle = 'rgba(168, 85, 247, 0.2)';
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.45)';
+      ctx.beginPath();
+      ctx.roundRect(subX, subY, subMetrics.width + 12, 16, 4);
+      ctx.fill();
+      ctx.stroke();
+
       ctx.fillStyle = '#C084FC';
-      ctx.fillText(`🔗 Shared by ${node.connected_clusters_count || 2} Clusters`, node.x, node.y + node.radius + 25);
+      ctx.fillText(subText, node.x, subY + 8);
     }
 
     ctx.restore();

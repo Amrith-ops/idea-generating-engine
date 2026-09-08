@@ -3044,12 +3044,30 @@ h1, h2, h3, h4, .metric-value, .osi-val, .sat-osi {
 .paingraph-canvas-container {
   position: relative;
   width: 100%;
-  height: 720px;
+  height: 880px;
   background: radial-gradient(circle at center, #0F172A 0%, #060911 100%);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.pg-nav-hint-overlay {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 #pain-network-canvas {
