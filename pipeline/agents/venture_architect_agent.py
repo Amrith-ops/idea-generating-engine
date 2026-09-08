@@ -53,7 +53,7 @@ For EACH blueprint provide:
 - "target_icp": Exact stranded customer profile (e.g. "1-15 Person Technical Teams")
 - "pricing_strategy": Transparent flat monthly pricing (e.g. "$49/mo flat rate (unlimited team seats)")
 - "core_features": Array of 4 to 6 core MVP features (zero bloat)
-- "search_demand_keywords": Array of 3 to 4 realistic search phrases buyers use when seeking this alternative
+- "search_demand_keywords": Array of 3 to 4 realistic, high-intent 2-to-3 word search phrases buyers actually type into Google (e.g. "zendesk alternative", "help desk pricing", "ticketing automation", "simple help desk software")
 - "osi_score": Opportunity Score Index between 8.9 and 9.7
 
 Return valid JSON with schema:
@@ -90,9 +90,9 @@ Return valid JSON with schema:
                             "One-click migration from legacy suites in under 5 minutes"
                         ],
                         "search_demand_keywords": [
-                            f"{category_slug} flat pricing",
-                            f"simple {category_slug} for startups",
-                            f"lightweight {category_slug} tool"
+                            f"{category_name.lower()} alternative",
+                            f"simple {category_name.lower()}",
+                            f"{category_name.lower()} pricing"
                         ],
                         "osi_score": 9.4
                     },
@@ -110,9 +110,9 @@ Return valid JSON with schema:
                             "Embedded self-service resolution widgets"
                         ],
                         "search_demand_keywords": [
-                            f"best {category_slug} for agencies",
-                            f"automated {category_slug} software",
-                            f"niche {category_slug} alternative"
+                            f"{category_name.lower()} software",
+                            f"{category_name.lower()} for small business",
+                            f"open source {category_name.lower()}"
                         ],
                         "osi_score": 9.2
                     }

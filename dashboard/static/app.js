@@ -1608,18 +1608,27 @@ async function loadWhitespaceOpportunities(categorySlug) {
             </div>
             <div class="seo-kws-list">
               ${searchKws.slice(0, 3).map(kw => {
-                const kwName = typeof kw === 'string' ? kw : (kw.keyword || 'micro-saas alternative');
-                const vol = typeof kw === 'object' && kw.monthly_search_volume ? Number(kw.monthly_search_volume).toLocaleString() : '4,200';
-                const growth = typeof kw === 'object' && kw.growth_yoy_pct ? `+${kw.growth_yoy_pct}%` : '+210%';
-                const cpc = typeof kw === 'object' && kw.cpc_usd ? `$${kw.cpc_usd}` : '$14.50';
+                const isObj = typeof kw === 'object' && kw !== null;
+                const kwName = isObj ? (kw.verified_root_query || kw.keyword || 'saas alternative') : (typeof kw === 'string' ? kw : 'saas alternative');
+                const origQuery = isObj && kw.original_seed_query ? ` (Root for "${kw.original_seed_query}")` : '';
+                const volNum = isObj && kw.monthly_search_volume !== undefined ? Number(kw.monthly_search_volume) : 0;
+                const volStr = volNum > 0 ? `${volNum.toLocaleString()} /mo` : '< 10 /mo';
+                const growthNum = isObj && kw.growth_yoy_pct !== undefined ? Number(kw.growth_yoy_pct) : 0;
+                const growthStr = growthNum !== 0 ? `${growthNum > 0 ? '+' : ''}${growthNum}% YoY` : '0% YoY (Low Data)';
+                const cpcStr = isObj && kw.cpc_usd ? `$${kw.cpc_usd}` : '$0.00';
+                const isVerified = volNum > 0 && (isObj && kw.demand_status !== 'unverified');
 
                 return `
-                  <div class="seo-kw-row">
-                    <span class="seo-kw-name">${kwName}</span>
+                  <div class="seo-kw-row" style="${!isVerified ? 'opacity: 0.65;' : ''}">
+                    <span class="seo-kw-name" title="${kwName}${origQuery}">${kwName}</span>
                     <div class="seo-kw-stats">
-                      <span class="seo-vol-badge">${vol} /mo</span>
-                      <span class="seo-growth-badge">${growth} YoY</span>
-                      <span style="color:var(--text-muted); font-size:0.72rem;">${cpc} CPC</span>
+                      ${isVerified ? `
+                        <span class="seo-vol-badge">${volStr}</span>
+                        <span class="seo-growth-badge">${growthStr}</span>
+                        <span style="color:var(--text-muted); font-size:0.72rem;">${cpcStr} CPC</span>
+                      ` : `
+                        <span style="color:var(--text-muted); font-size:0.75rem;">⚪ Unproven (&lt;10/mo in Google)</span>
+                      `}
                     </div>
                   </div>
                 `;
