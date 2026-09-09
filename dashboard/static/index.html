@@ -77,7 +77,7 @@
             <div class="quick-search-actions">
               <input type="text" id="category-quick-search" class="custom-input" placeholder="Search 1,887 subcategories..." list="category-datalist" onchange="onCategorySearchSelect(this.value)">
               <datalist id="category-datalist"></datalist>
-              <button class="btn-secondary" onclick="openHierarchyModal()" title="Browse all 33 Root Sectors & 1,887 Subcategories">
+              <button class="btn-secondary btn-directory" onclick="openHierarchyModal()" title="Browse all 33 Root Sectors & 1,887 Subcategories">
                 📂 Directory
               </button>
             </div>
@@ -86,11 +86,17 @@
           <!-- 5-AGENT RUN TRIGGER -->
           <div class="control-group button-group">
             <label class="control-label" style="opacity:0;">Discovery Action</label>
-            <button id="btn-mine" class="btn-primary btn-block" onclick="triggerMine()">
+            <button id="btn-mine" class="btn-primary btn-block btn-launch-discovery" onclick="triggerMine()">
               <span id="btn-text">⚡ Run 5-Agent Discovery</span>
               <div id="btn-spinner" class="spinner hidden"></div>
             </button>
           </div>
+        </div>
+
+        <!-- 1-SENTENCE USAGE INSTRUCTION -->
+        <div class="command-bar-hint">
+          <span class="hint-icon">💡</span>
+          <span><b>How to use:</b> Select any already-scanned subcategory (marked <b style="color:var(--emerald-glow);">🟢</b>) to instantly view its Competitor Clusters & White Space Matrix, or pick any category & click <b>⚡ Run 5-Agent Discovery</b> to harvest live reviews and mine new unbundling wedges.</span>
         </div>
       </div>
     </section>
@@ -152,225 +158,166 @@
           
           <div class="weights-gauge-grid" id="weights-gauge-container">
             <!-- Populated by JS -->
-            <div class="weight-gauge-item">
-              <div class="weight-gauge-label">
-                <span>JTBD Capabilities (W_cap)</span>
-                <span id="wt-val-cap" class="wt-val">30%</span>
-              </div>
-              <div class="weight-bar-track"><div id="wt-bar-cap" class="weight-bar-fill" style="width:30%;"></div></div>
-            </div>
-            <div class="weight-gauge-item">
-              <div class="weight-gauge-label">
-                <span>Product Philosophy (W_phil)</span>
-                <span id="wt-val-phil" class="wt-val">25%</span>
-              </div>
-              <div class="weight-bar-track"><div id="wt-bar-phil" class="weight-bar-fill" style="width:25%; background:linear-gradient(90deg, #A855F7, #EC4899);"></div></div>
-            </div>
-            <div class="weight-gauge-item">
-              <div class="weight-gauge-label">
-                <span>Market Tier & Price (W_tier)</span>
-                <span id="wt-val-tier" class="wt-val">20%</span>
-              </div>
-              <div class="weight-bar-track"><div id="wt-bar-tier" class="weight-bar-fill" style="width:20%; background:linear-gradient(90deg, #3B82F6, #06B6D4);"></div></div>
-            </div>
-            <div class="weight-gauge-item">
-              <div class="weight-gauge-label">
-                <span>Google Search Graph (W_gsearch)</span>
-                <span id="wt-val-gsearch" class="wt-val">15%</span>
-              </div>
-              <div class="weight-bar-track"><div id="wt-bar-gsearch" class="weight-bar-fill" style="width:15%; background:linear-gradient(90deg, #10B981, #059669);"></div></div>
-            </div>
-            <div class="weight-gauge-item">
-              <div class="weight-gauge-label">
-                <span>Churn & Pricing Pain (W_churn)</span>
-                <span id="wt-val-churn" class="wt-val">10%</span>
-              </div>
-              <div class="weight-bar-track"><div id="wt-bar-churn" class="weight-bar-fill" style="width:10%; background:linear-gradient(90deg, #F59E0B, #EF4444);"></div></div>
-            </div>
-          </div>
-
-          <div class="strat-rationale-box">
-            <div class="strat-rationale-title">🧠 Strategic Domain Rationale:</div>
-            <p id="strat-weight-rationale" class="strat-rationale-text">
-              In this category, architectural philosophy (Queue vs Conversational vs Shared Inbox) dictates true competitive gravity. High weight is assigned to capability vectors while market tier segmentation separates enterprise suites from SMB tools.
-            </p>
           </div>
         </div>
 
-        <!-- CARD 2: RED-TEAM ADVERSARIAL AUDITOR VERDICT -->
-        <div class="strategic-card red-team-card" id="card-red-team">
+        <!-- CARD 2: AGENT 4 RED-TEAM AUDIT SUMMARY -->
+        <div class="strategic-card red-team-card" id="card-red-team-audit">
           <div class="strategic-card-header">
             <div class="strat-title-group">
               <span class="strat-icon">🛡️</span>
               <div>
-                <h4>Agent 4: Red-Team Adversarial Audit Verdict</h4>
-                <p>Independent anti-hallucination gate auditing proposed white spaces against customer review citations.</p>
+                <h4>Agent 4: Red-Team Adversarial Audit Gate</h4>
+                <p>Anti-hallucination verification cross-checking proposed omissions against verbatim G2/Capterra quotes.</p>
               </div>
             </div>
-            <span id="redteam-status-badge" class="strat-badge green">PASSED (Verified)</span>
+            <span class="strat-badge emerald" id="strat-audit-status">Audit Passed</span>
           </div>
 
-          <div class="audit-stats-row">
-            <div class="audit-stat-item">
-              <span class="audit-stat-label">Audit Confidence</span>
-              <span id="audit-confidence-val" class="audit-stat-value emerald">94%</span>
-            </div>
-            <div class="audit-stat-item">
-              <span class="audit-stat-label">Systemic Omissions Verified</span>
-              <span id="audit-verified-count" class="audit-stat-value purple">3 Omissions</span>
-            </div>
-            <div class="audit-stat-item">
-              <span class="audit-stat-label">Hallucinations Rejected</span>
-              <span id="audit-rejected-count" class="audit-stat-value amber">0 Filtered</span>
-            </div>
-          </div>
-
-          <div class="audit-observations-box">
-            <div class="strat-rationale-title">🔍 Red-Team Critic Observations:</div>
-            <ul id="audit-observations-list" class="audit-obs-list">
-              <li>✓ Verified that no incumbent currently provides flat-rate pricing with zero tiered seat escalation.</li>
-              <li>✓ Customer reviews confirm high dissatisfaction regarding multi-week onboarding delays.</li>
-              <li>✓ Cross-cluster pain overlap validated against G2/Capterra review corpus.</li>
-            </ul>
+          <div class="audit-summary-body" id="audit-summary-container">
+            <!-- Populated by JS -->
           </div>
         </div>
       </div>
 
-      <!-- SECTION 1: COMPETITOR CLUSTERS BREAKDOWN -->
-      <div style="margin-bottom: 2rem;">
-        <div class="section-label" style="font-size: 1rem; color:var(--purple-glow); margin-bottom: 1rem;">
-          🏢 Strategic Competitor Clusters in <span id="clusters-category-title">Active Sub-Category</span>
+      <!-- SECTION 1: ARCHETYPE COMPETITOR CLUSTERS -->
+      <div class="section-title-bar">
+        <h3>1. Multi-Signal Competitor Archetype Clusters</h3>
+        <p>Incumbents grouped by feature profiles, buyer personas, market tier, and search graph distance.</p>
+      </div>
+      <div class="clusters-grid" id="clusters-container">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- SECTION 2: HIGH-CONVICTION WHITE SPACE MICRO-SAAS OPPORTUNITIES -->
+      <div class="section-title-bar" style="margin-top:2rem;">
+        <h3>2. Validated White Space Micro-SaaS Opportunities</h3>
+        <p>Synthesized by identifying unaddressed omissions across all incumbent clusters and verified with Google SEO demand.</p>
+      </div>
+      <div class="whitespace-grid" id="whitespace-container">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- 2. PAIN NETWORK & OMISSION GRAPH VIEW -->
+    <section id="paingraph-view-section" class="paingraph-view-section hidden">
+      <div class="keyword-header-card" style="border-color: rgba(244,63,94,0.3); background: linear-gradient(135deg, rgba(244,63,94,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+        <div class="kw-header-info">
+          <h3>🕸️ Cross-Cluster Pain Network & Systemic Omission Graph</h3>
+          <p>Interactive graph showing how customer dissatisfaction connects across incumbent groups—and highlights <b>100% Unresolved Blind Spots</b> ripe for Micro-SaaS disruption.</p>
         </div>
-        <div id="clusters-grid" class="clusters-grid">
-          <!-- Populated by JS -->
+        <div class="kw-stat-badges">
+          <button class="btn-primary" onclick="loadPainGraphView(activeCategorySlug)" style="background:linear-gradient(135deg, #F43F5E 0%, #E11D48 100%); color:#FFF;">
+            🔄 Refresh Pain Graph
+          </button>
         </div>
       </div>
 
-      <!-- SECTION 2: WHITE SPACE OPPORTUNITIES -->
-      <div>
-        <div class="section-label" style="font-size: 1rem; color:var(--emerald-glow); margin-bottom: 1rem;">
-          ✨ High-Conviction White Space Opportunities (Systemic Pain Omissions + Google SEO Validated)
+      <!-- PAIN GRAPH CONTAINER -->
+      <div class="paingraph-wrapper">
+        <div class="paingraph-toolbar">
+          <div class="pg-filter-group">
+            <span class="pg-label">Filter Nodes:</span>
+            <button class="pg-btn active" id="pg-flt-all" onclick="filterPainGraph('all')">All Nodes</button>
+            <button class="pg-btn" id="pg-flt-shared" onclick="filterPainGraph('shared')">Shared Bridges</button>
+            <button class="pg-btn" id="pg-flt-omissions" onclick="filterPainGraph('omissions')">🚨 Unresolved Omissions</button>
+            <button class="pg-btn" id="pg-flt-isolated" onclick="filterPainGraph('isolated')">Cluster Specific</button>
+          </div>
+          <div class="pg-filter-group">
+            <input type="text" id="pg-search-input" class="pg-search" placeholder="Search pain or feature..." oninput="searchPainGraph(this.value)">
+            <button class="pg-btn" id="pg-btn-physics" onclick="toggleGraphPhysics()">⏸️ Physics</button>
+            <button class="pg-btn" onclick="resetGraphCamera()">🎯 Center View</button>
+            <button class="pg-btn" onclick="zoomGraph(1.2)">🔍+</button>
+            <button class="pg-btn" onclick="zoomGraph(0.8)">🔍-</button>
+          </div>
         </div>
-        <div id="whitespace-opportunities-grid" class="whitespace-grid">
-          <!-- Populated by JS -->
+
+        <div id="paingraph-canvas-container" class="paingraph-canvas-container">
+          <canvas id="paingraph-canvas"></canvas>
+          
+          <!-- GRAPH LEGEND OVERLAY -->
+          <div class="paingraph-legend-box">
+            <div class="pg-legend-item"><span class="pg-dot dot-cluster"></span> Competitor Cluster Archetype</div>
+            <div class="pg-legend-item"><span class="pg-dot dot-bridge"></span> Shared Cross-Cluster Pain Bridge</div>
+            <div class="pg-legend-item"><span class="pg-dot dot-omission"></span> 🚨 100% Unresolved Systemic Omission</div>
+            <div class="pg-legend-item"><span class="pg-dot dot-solution"></span> 🚀 Validated Micro-SaaS Wedge</div>
+          </div>
+
+          <!-- HOVER TOOLTIP -->
+          <div id="pg-hover-tooltip" class="pg-hover-tooltip hidden"></div>
+
+          <!-- INTERACTIVE INSPECTOR DRAWER -->
+          <div id="paingraph-inspector-drawer" class="paingraph-inspector-drawer closed">
+            <div class="pg-inspector-header">
+              <div class="pg-insp-badge-row">
+                <span class="pg-insp-type-badge" id="pg-insp-type">Node Type</span>
+                <span class="pg-insp-severity-badge" id="pg-insp-severity">Severity: 9.5</span>
+              </div>
+              <button class="pg-insp-close" onclick="closePainGraphInspector()">&times;</button>
+            </div>
+            <div class="pg-inspector-body" id="pg-insp-body">
+              <!-- Populated by JS on node click -->
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- 5. CROSS-CLUSTER PAIN NETWORK & UNRESOLVED OMISSION MATRIX VIEW -->
-    <section id="paingraph-view-section" class="paingraph-view-section hidden">
-      <!-- HEADER & CONTROLS -->
-      <div class="paingraph-header-card">
-        <div class="paingraph-header-top">
-          <div class="paingraph-title-block">
-            <div class="paingraph-pulse-orb">🕸️</div>
-            <div>
-              <h2>Cross-Cluster Pain Network & Unresolved Omission Matrix</h2>
-              <p>Interactive Multi-Cluster Graph exposing shared structural pain points and <span style="color:var(--rose-glow); font-weight:700;">100% unaddressed blind spots</span> (White Space Vacuums left unsolved by all incumbents).</p>
-            </div>
-          </div>
-          <div class="paingraph-cat-badge-box">
-            <span class="paingraph-cat-label">Active Subcategory</span>
-            <div class="paingraph-cat-pill" id="pg-active-cat-name">Help Desk Software</div>
-          </div>
+    <!-- 3. KEYWORD SEARCH VOLUME VIEW -->
+    <section id="keyword-view-section" class="keyword-view-section hidden">
+      <div class="keyword-header-card">
+        <div class="kw-header-info">
+          <h3>📊 Live Google Search Demand & Keyword Trends</h3>
+          <p>Real-time monthly search volumes, 5-year trend trajectories, and cost-per-click values grounded via Google Trends & Autocomplete APIs.</p>
         </div>
-
-        <!-- TELEMETRY METRIC STATS -->
-        <div class="paingraph-stats-bar">
-          <div class="pg-stat-item">
-            <span class="pg-stat-val purple" id="pg-stat-clusters">--</span>
-            <span class="pg-stat-lbl">🏢 Competitor Clusters</span>
-          </div>
-          <div class="pg-stat-item">
-            <span class="pg-stat-val cyan" id="pg-stat-shared">--</span>
-            <span class="pg-stat-lbl">🔗 Cross-Cluster Shared Pains</span>
-          </div>
-          <div class="pg-stat-item">
-            <span class="pg-stat-val blue" id="pg-stat-isolated">--</span>
-            <span class="pg-stat-lbl">🎯 Cluster-Isolated Pains</span>
-          </div>
-          <div class="pg-stat-item beacon-stat">
-            <span class="pg-stat-val rose" id="pg-stat-omissions">--</span>
-            <span class="pg-stat-lbl">🚨 100% Unresolved Blind Spots</span>
-          </div>
-          <div class="pg-stat-item">
-            <span class="pg-stat-val emerald" id="pg-stat-solutions">--</span>
-            <span class="pg-stat-lbl">🚀 Micro-SaaS Wedges</span>
-          </div>
-        </div>
-
-        <!-- FILTER & GRAPH CONTROLS -->
-        <div class="paingraph-controls-bar">
-          <div class="pg-filter-group">
-            <button class="pg-filter-btn active" id="pg-flt-all" onclick="filterPainGraph('all')">🌟 All Nodes & Links</button>
-            <button class="pg-filter-btn" id="pg-flt-shared" onclick="filterPainGraph('shared')">🔗 Cross-Cluster Shared Only</button>
-            <button class="pg-filter-btn beacon-btn" id="pg-flt-omissions" onclick="filterPainGraph('omissions')">🚨 Unresolved Blind Spots (White Space)</button>
-            <button class="pg-filter-btn" id="pg-flt-isolated" onclick="filterPainGraph('isolated')">🎯 Cluster-Isolated</button>
-          </div>
-
-          <div class="pg-search-and-cluster">
-            <div class="pg-search-box">
-              <span>🔍</span>
-              <input type="text" id="pg-search-input" placeholder="Search pain points, reviews, keywords..." oninput="searchPainGraph(this.value)">
-            </div>
-            <select id="pg-cluster-select" class="pg-select" onchange="filterPainGraphByCluster(this.value)">
-              <option value="all">🏢 All Clusters</option>
-            </select>
-          </div>
-
-          <div class="pg-physics-controls">
-            <button class="pg-tool-btn" id="pg-btn-physics" onclick="toggleGraphPhysics()" title="Pause/Resume Force Simulation">⏸️ Physics</button>
-            <button class="pg-tool-btn" onclick="resetGraphCamera()" title="Reset Zoom & Pan">🔄 Reset</button>
-            <button class="pg-tool-btn" onclick="zoomGraph(1.25)" title="Zoom In">🔍+</button>
-            <button class="pg-tool-btn" onclick="zoomGraph(0.8)" title="Zoom Out">🔍-</button>
-          </div>
+        <div class="kw-stat-badges">
+          <div class="kw-badge"><span class="kw-badge-num" id="kw-total-count">--</span> Tracked Keywords</div>
+          <div class="kw-badge green"><span class="kw-badge-num" id="kw-growing-count">--</span> High YoY Surges</div>
         </div>
       </div>
 
-      <!-- GRAPH VIEWPORT CONTAINER -->
-      <div class="paingraph-stage-wrapper">
-        <div class="paingraph-canvas-container" id="paingraph-canvas-container">
-          <canvas id="pain-network-canvas"></canvas>
-
-          <!-- NAVIGATION & INTERACTION HINT -->
-          <div class="pg-nav-hint-overlay">
-            <span>🖱️ <b>Drag Canvas:</b> Pan View</span>
-            <span style="opacity:0.5;">•</span>
-            <span>📜 <b>Scroll / Pinch:</b> Zoom In/Out</span>
-            <span style="opacity:0.5;">•</span>
-            <span>👆 <b>Click Node:</b> Inspect Deep-Dive</span>
+      <div class="kw-tables-grid">
+        <div class="kw-card">
+          <div class="kw-card-header">
+            <h4>🚀 Fastest Growing Micro-SaaS Queries</h4>
+            <span class="badge green">YoY Growth > 100%</span>
           </div>
-
-          <!-- INTERACTIVE HOVER TOOLTIP -->
-          <div id="pg-hover-tooltip" class="pg-hover-tooltip hidden"></div>
-
-          <!-- MAP LEGEND OVERLAY -->
-          <div class="paingraph-legend-overlay">
-            <div class="pg-legend-title">🎨 Graph Legend</div>
-            <div class="pg-legend-items">
-              <div class="pg-legend-row"><span class="pg-dot cluster-dot"></span><span>🏢 Competitor Cluster Hub</span></div>
-              <div class="pg-legend-row"><span class="pg-dot shared-dot"></span><span>🔗 Cross-Cluster Shared Pain (Contagion)</span></div>
-              <div class="pg-legend-row"><span class="pg-dot isolated-dot"></span><span>🎯 Cluster-Isolated Pain</span></div>
-              <div class="pg-legend-row"><span class="pg-dot omission-dot pulse-dot"></span><span>🚨 100% Unresolved Blind Spot (0 Solved)</span></div>
-              <div class="pg-legend-row"><span class="pg-dot solution-dot"></span><span>🚀 Micro-SaaS Unbundling Wedge</span></div>
-            </div>
+          <div class="table-wrapper">
+            <table class="kw-table">
+              <thead>
+                <tr>
+                  <th>Keyword / Search Query</th>
+                  <th>Monthly Vol</th>
+                  <th>YoY Growth</th>
+                  <th>Trend Signal</th>
+                </tr>
+              </thead>
+              <tbody id="fastest-growing-tbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
           </div>
+        </div>
 
-          <!-- INTERACTIVE DEEP-DIVE INSPECTOR DRAWER -->
-          <div id="paingraph-inspector-drawer" class="paingraph-inspector-drawer closed">
-            <div class="pg-inspector-header">
-              <div class="pg-insp-badge-row">
-                <span id="pg-insp-type-badge" class="pg-insp-type-badge">Node Inspector</span>
-                <span id="pg-insp-severity-badge" class="pg-insp-severity-badge">Severity: 9.0</span>
-              </div>
-              <button class="pg-insp-close" onclick="closePainGraphInspector()">&times;</button>
-            </div>
-            
-            <div class="pg-inspector-body" id="pg-inspector-body">
-              <div style="text-align:center; padding:3rem 1rem; color:var(--text-secondary);">
-                Select any Cluster Hub, Shared Pain, or Unresolved Blind Spot to inspect deep-dive customer evidence and Micro-SaaS wedge solutions.
-              </div>
-            </div>
+        <div class="kw-card">
+          <div class="kw-card-header">
+            <h4>🔥 Highest Volume Software Buyer Searches</h4>
+            <span class="badge blue">High Intent B2B</span>
+          </div>
+          <div class="table-wrapper">
+            <table class="kw-table">
+              <thead>
+                <tr>
+                  <th>Keyword / Search Query</th>
+                  <th>Monthly Vol</th>
+                  <th>Est. CPC</th>
+                  <th>Market Intent</th>
+                </tr>
+              </thead>
+              <tbody id="highest-volume-tbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -420,16 +367,27 @@
       </div>
     </div>
 
-    <!-- MODAL OVERLAY: COMPLETE 33 SECTORS HIERARCHY DIRECTORY -->
+    <!-- MODAL OVERLAY: G2 CATEGORY DIRECTORY & TAXONOMY -->
     <div id="hierarchy-modal-overlay" class="modal-overlay hidden" onclick="closeHierarchyModal(event)">
       <div class="modal-card hierarchy-modal-card" onclick="event.stopPropagation()">
         <button class="modal-close" onclick="closeHierarchyModal()">&times;</button>
         <div class="modal-header-evidence">
-          <h3>📂 Complete Macro Sectors & Subcategories Directory</h3>
-          <p>Browse all 33 Root Macro Domains and their 1,887 Sub-Categories. Click any category to explore its orbit or run AI harvesting.</p>
+          <h3>📂 G2 Category Directory: Scanned Opportunities & Full Taxonomy</h3>
+          <p>Select any already-scanned category with verified data, or choose any new subcategory to run the 5-Agent Discovery Engine.</p>
         </div>
+
+        <!-- DIRECTORY VIEW TOGGLE (SCANNED VS ALL) -->
+        <div class="hierarchy-tab-toggle">
+          <button class="hierarchy-tab-btn active" id="dir-tab-scanned" onclick="setHierarchyDirectoryFilter('scanned')">
+            🟢 Already Scanned & Mined (<span id="scanned-cat-count">6</span> Categories)
+          </button>
+          <button class="hierarchy-tab-btn" id="dir-tab-all" onclick="setHierarchyDirectoryFilter('all')">
+            📂 Complete G2 Taxonomy (1,887 Sub-Categories)
+          </button>
+        </div>
+
         <div class="hierarchy-search-bar">
-          <input type="text" id="hierarchy-filter-input" placeholder="Filter categories (e.g. Customer Service, Help Desk, CRM, Accounting)..." oninput="filterHierarchyModal(this.value)">
+          <input type="text" id="hierarchy-filter-input" placeholder="Search by sector or category (e.g. Help Desk, CRM, Accounting, Marketing, Security)..." oninput="filterHierarchyModal(this.value)">
         </div>
         <div id="hierarchy-tree-container" class="hierarchy-tree-container">
           <!-- Populated by JS -->
@@ -437,41 +395,59 @@
       </div>
     </div>
 
-    <!-- MODAL OVERLAY: LIVE AGENT STREAMING & PROGRESS TRACKER -->
+    <!-- MODAL OVERLAY: UNIFIED 3-PHASE PIPELINE & 5-AGENT LIVE PROGRESS TRACKER -->
     <div id="agent-progress-modal" class="modal-overlay hidden" onclick="handleAgentModalOverlayClick(event)">
       <div class="modal-card agent-progress-modal-card" onclick="event.stopPropagation()">
         <div class="agent-modal-header">
           <div class="agent-modal-brand">
             <div class="agent-pulse-icon">⚡</div>
             <div>
-              <h3 id="agent-modal-title">Autonomous 5-Agent Collaborative Loop</h3>
+              <h3 id="agent-modal-title">End-to-End Pipeline & 5-Agent Discovery Loop</h3>
               <p id="agent-modal-subtitle">Live real-time telemetry streaming for <span id="prog-target-name" class="highlight-target">Help Desk Software</span></p>
             </div>
           </div>
           <button id="btn-close-agent-modal" class="modal-close" onclick="closeAgentProgressModal()">&times;</button>
         </div>
 
+        <!-- 3-PHASE PIPELINE STATUS BREADCRUMB -->
+        <div class="pipeline-phases-bar" id="pipeline-phases-bar">
+          <div class="pipeline-phase-pill active" id="phase-pill-1">
+            <span class="phase-pill-badge">Phase 1</span>
+            <span class="phase-pill-title">Taxonomy & Market Discovery</span>
+          </div>
+          <div class="pipeline-phase-arrow">➔</div>
+          <div class="pipeline-phase-pill" id="phase-pill-2">
+            <span class="phase-pill-badge">Phase 2</span>
+            <span class="phase-pill-title">Review Ingestion & Profiling</span>
+          </div>
+          <div class="pipeline-phase-arrow">➔</div>
+          <div class="pipeline-phase-pill" id="phase-pill-3">
+            <span class="phase-pill-badge">Phase 3</span>
+            <span class="phase-pill-title">5-Agent AI Loop & Math Matrix</span>
+          </div>
+        </div>
+
         <!-- PROGRESS METRICS STATS BAR -->
         <div class="agent-telemetry-kpis">
           <div class="telemetry-kpi-card">
-            <span class="telemetry-kpi-label">Total Category Products</span>
-            <div class="telemetry-kpi-val" id="prog-total-prods">--</div>
-            <span class="telemetry-kpi-sub">In Taxonomy Index</span>
+            <span class="telemetry-kpi-label">Category Domain</span>
+            <div class="telemetry-kpi-val cyan" id="prog-cat-domain">Customer Service</div>
+            <span class="telemetry-kpi-sub" id="prog-cat-sub">Subcategory Resolved</span>
           </div>
           <div class="telemetry-kpi-card glow-cyan">
-            <span class="telemetry-kpi-label">Products Scraped & Profiled</span>
-            <div class="telemetry-kpi-val cyan" id="prog-scraped-prods">--</div>
-            <span class="telemetry-kpi-sub">Full Capability Extraction</span>
+            <span class="telemetry-kpi-label">Products & Reviews</span>
+            <div class="telemetry-kpi-val cyan" id="prog-scraped-prods">-- / --</div>
+            <span class="telemetry-kpi-sub" id="prog-reviews-sub">Full Extraction</span>
           </div>
           <div class="telemetry-kpi-card glow-purple">
-            <span class="telemetry-kpi-label">Active AI Agent</span>
+            <span class="telemetry-kpi-label">Active Phase / Agent</span>
             <div class="telemetry-kpi-val purple" id="prog-active-agent">Initializing</div>
-            <span class="telemetry-kpi-sub" id="prog-agent-role">Multi-Model Fallback</span>
+            <span class="telemetry-kpi-sub" id="prog-agent-role">Phase 1: Discovery</span>
           </div>
           <div class="telemetry-kpi-card glow-emerald">
-            <span class="telemetry-kpi-label">Loop Progress</span>
+            <span class="telemetry-kpi-label">Pipeline Progress</span>
             <div class="telemetry-kpi-val emerald" id="prog-percent-text">0%</div>
-            <span class="telemetry-kpi-sub" id="prog-status-text">Starting...</span>
+            <span class="telemetry-kpi-sub" id="prog-status-text">Starting pipeline...</span>
           </div>
         </div>
 
@@ -482,47 +458,78 @@
           </div>
         </div>
 
-        <!-- VISUAL 7-STEP PROGRESS STEPPER -->
+        <!-- VISUAL 10-STEP MULTI-PHASE PROGRESS STEPPER -->
         <div class="agent-stepper" id="agent-stepper">
-          <div class="stepper-step" id="step-1" data-step="1">
+          <!-- PHASE 1: STEPS 1-2 -->
+          <div class="stepper-step active" id="step-1" data-step="1">
             <div class="step-circle"><span class="step-num">1</span></div>
-            <div class="step-label">Scout & Scraper</div>
+            <div class="step-label">Taxonomy Scout</div>
+            <span class="step-phase-tag">P1</span>
           </div>
           <div class="stepper-line" id="line-1"></div>
 
           <div class="stepper-step" id="step-2" data-step="2">
             <div class="step-circle"><span class="step-num">2</span></div>
-            <div class="step-label">1. Normalizer</div>
+            <div class="step-label">Market Indexer</div>
+            <span class="step-phase-tag">P1</span>
           </div>
           <div class="stepper-line" id="line-2"></div>
 
+          <!-- PHASE 2: STEPS 3-4 -->
           <div class="stepper-step" id="step-3" data-step="3">
             <div class="step-circle"><span class="step-num">3</span></div>
-            <div class="step-label">2. Strategist</div>
+            <div class="step-label">Review Harvester</div>
+            <span class="step-phase-tag">P2</span>
           </div>
           <div class="stepper-line" id="line-3"></div>
 
           <div class="stepper-step" id="step-4" data-step="4">
             <div class="step-circle"><span class="step-num">4</span></div>
-            <div class="step-label">3. Math Matrix</div>
+            <div class="step-label">Feature Extractor</div>
+            <span class="step-phase-tag">P2</span>
           </div>
           <div class="stepper-line" id="line-4"></div>
 
+          <!-- PHASE 3: STEPS 5-10 -->
           <div class="stepper-step" id="step-5" data-step="5">
             <div class="step-circle"><span class="step-num">5</span></div>
-            <div class="step-label">4. Formulator</div>
+            <div class="step-label">1. Normalizer</div>
+            <span class="step-phase-tag">P3</span>
           </div>
           <div class="stepper-line" id="line-5"></div>
 
           <div class="stepper-step" id="step-6" data-step="6">
             <div class="step-circle"><span class="step-num">6</span></div>
-            <div class="step-label">5. Red-Team</div>
+            <div class="step-label">2. Strategist</div>
+            <span class="step-phase-tag">P3</span>
           </div>
           <div class="stepper-line" id="line-6"></div>
 
           <div class="stepper-step" id="step-7" data-step="7">
             <div class="step-circle"><span class="step-num">7</span></div>
+            <div class="step-label">3. Math Matrix</div>
+            <span class="step-phase-tag">P3</span>
+          </div>
+          <div class="stepper-line" id="line-7"></div>
+
+          <div class="stepper-step" id="step-8" data-step="8">
+            <div class="step-circle"><span class="step-num">8</span></div>
+            <div class="step-label">4. Formulator</div>
+            <span class="step-phase-tag">P3</span>
+          </div>
+          <div class="stepper-line" id="line-8"></div>
+
+          <div class="stepper-step" id="step-9" data-step="9">
+            <div class="step-circle"><span class="step-num">9</span></div>
+            <div class="step-label">5. Red-Team</div>
+            <span class="step-phase-tag">P3</span>
+          </div>
+          <div class="stepper-line" id="line-9"></div>
+
+          <div class="stepper-step" id="step-10" data-step="10">
+            <div class="step-circle"><span class="step-num">10</span></div>
             <div class="step-label">6. Architect & SEO</div>
+            <span class="step-phase-tag">P3</span>
           </div>
         </div>
 
@@ -534,19 +541,19 @@
               <span class="term-dot yellow"></span>
               <span class="term-dot green"></span>
             </div>
-            <span class="term-title">Agentic Execution Stream & Thought Telemetry</span>
+            <span class="term-title">3-Phase Execution Stream & Thought Telemetry</span>
             <span class="term-live-tag"><span class="live-dot"></span> LIVE NDJSON STREAM</span>
           </div>
           <div class="terminal-body" id="agent-terminal-logs">
-            <div class="term-log-line system">[SYSTEM] Ready. Listening to streaming socket...</div>
+            <div class="term-log-line system">[SYSTEM] Ready. Subscribing to 3-Phase NDJSON telemetry feed...</div>
           </div>
         </div>
 
         <!-- FOOTER ACTIONS -->
         <div class="agent-modal-footer">
-          <span class="agent-footer-hint" id="agent-footer-hint">Agentic loop in progress. Streaming thoughts and linear algebra calculations...</span>
+          <span class="agent-footer-hint" id="agent-footer-hint">Phase 1 in progress. Connecting to market index and discovering competitors...</span>
           <button id="btn-finish-agent-modal" class="btn-primary" onclick="closeAgentProgressModal()" disabled>
-            Done & View Strategic Intelligence
+            Done & View Strategic Intelligence →
           </button>
         </div>
       </div>
