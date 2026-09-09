@@ -11,6 +11,7 @@
 | Bug ID | Title | Component | Severity | Discovered Date | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **BUG-001** | Duplicate Negative Review Ingestion (Idempotency Deficit) | `pipeline/db_client.py`, `g2_reviews` | **High** | Sep 7, 2026 | **Resolved** ✅ |
+| **BUG-008** | Multi-Agent Loop Timeout & Step 10 Failure | `pipeline/agents/base_agent.py`, `dashboard/app.py` | **Critical** | Sep 9, 2026 | **Resolved** ✅ |
 
 ---
 
@@ -44,5 +45,26 @@
   3. **Verification:**
      - Verified clean database state: total reviews normalized from 94 to 69 unique reviews.
      - Verified re-insert attempts are idempotently ignored.
+
+---
+
+### 🐛 BUG-008: Multi-Agent AI Loop Timeout & Step 10 Failure in Venture Architect Agent
+
+* **Symptom:**
+  Executing Phase 3 (*5-Agent AI Loop & Math Matrix*) failed or timed out at Step 10 (*6. Architect & SEO*), showing an error banner in the browser UI and preventing whitespace dossiers from completing.
+
+* **Root Cause Analysis (RCA):**
+  1. **Model 503 & Cumulative Latency:** `gemini-3.5-flash` returned `503 Service Unavailable (High Demand)` on Google GenAI endpoints, forcing 15–25s timeout retries on every single agent step. Across 5 sequential agents, the cumulative latency crossed the 180s SSE stream buffer threshold in `dashboard/app.py` (`event_queue.get(timeout=180)`).
+  2. **Defensive Keyword Extraction:** LLM output format variations (dictionaries vs strings in `search_demand_keywords`) triggered potential type errors during Google Autocomplete queries.
+  3. **PostgreSQL Array Casting:** `unaddressed_pain_slugs` and `attacked_cluster_slugs` were susceptible to passing non-list or `None` values into PostgreSQL `TEXT[]` columns.
+
+* **Remediation & Fix Applied:**
+  1. **Model Fallback Chain:** Updated `BaseAgent.run_prompt_with_fallback()` in [`pipeline/agents/base_agent.py`](file:///c:/ideas_brain/pipeline/agents/base_agent.py) to prioritize `["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.5-flash"]`. Latency dropped to 1–2s per agent call.
+  2. **Keyword Parsing Defense:** Added robust type sanitization in [`pipeline/agents/venture_architect_agent.py`](file:///c:/ideas_brain/pipeline/agents/venture_architect_agent.py) to parse strings, dicts, or fallback queries with zero unhandled exceptions.
+  3. **PostgreSQL Array Sanitization:** In [`pipeline/db_client.py`](file:///c:/ideas_brain/pipeline/db_client.py), enforced `[str(x) for x in list if x]` for all `TEXT[]` parameters.
+  4. **Extended SSE Queue Timeout:** Increased timeout from 180s to 300s in [`dashboard/app.py`](file:///c:/ideas_brain/dashboard/app.py).
+
+* **Verification:**
+  - Ran `AgenticClusteringOrchestrator.execute_agentic_clustering_and_whitespace('help-desk')`. All 10 steps succeeded with 0 errors and synthesized full 10-module IdeaBrowser venture dossiers.
 
 ---

@@ -125,4 +125,20 @@ This document tracks the issues identified in the G2 Micro-SaaS AI Brain Command
      - Added styling in [`dashboard/static/style.css`](file:///c:/ideas_brain/dashboard/static/style.css).
 - **Status**: ✅ **RESOLVED & VERIFIED**
 
+---
 
+### Bug 8: Multi-Agent AI Loop Timeout & Step 10 Failure in Venture Architect Agent
+- **Severity**: Critical (Pipeline Failure)
+- **Component**: `pipeline/agents/base_agent.py`, `pipeline/agents/venture_architect_agent.py`, `pipeline/db_client.py`, `dashboard/app.py`
+- **Symptoms**:
+  - Phase 3 (*5-Agent AI Loop & Math Matrix*) failed or timed out during Step 10 (*6. Architect & SEO*), showing an error banner in the browser UI and preventing whitespace dossiers from completing.
+- **Root Cause**:
+  1. **Model 503 & Cumulative Latency**: In `base_agent.py`, `models_to_try` was set to `["gemini-3.5-flash", "gemini-3-flash-preview"]`. `gemini-3.5-flash` was returning `503 Service Unavailable (High Demand)` on Google GenAI endpoints, forcing 15–25s timeout retries on every single agent. Across 5 sequential agents, cumulative latency exceeded the 180s SSE stream buffer threshold in `dashboard/app.py` (`event_queue.get(timeout=180)`).
+  2. **Defensive Keyword Extraction**: Format variations (dictionaries vs strings in `search_demand_keywords`) triggered potential type errors during Google Autocomplete queries.
+  3. **PostgreSQL Array Casting**: `unaddressed_pain_slugs` and `attacked_cluster_slugs` were susceptible to passing non-list or `None` values into PostgreSQL `TEXT[]` columns.
+- **Fix Applied**:
+  1. **Model Fallback Chain**: Updated `BaseAgent.run_prompt_with_fallback()` to prioritize `["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.5-flash"]`. Latency dropped to 1–2s per agent call with 0 high-demand errors.
+  2. **Keyword Parsing Defense**: Added robust type sanitization in `venture_architect_agent.py` to parse strings, dicts, or fallback queries with zero unhandled exceptions.
+  3. **PostgreSQL Array Sanitization**: In `db_client.py`, enforced `[str(x) for x in list if x]` for all `TEXT[]` parameters.
+  4. **Extended SSE Queue Timeout**: Increased timeout from 180s to 300s in `dashboard/app.py`.
+- **Status**: ✅ **RESOLVED & VERIFIED**

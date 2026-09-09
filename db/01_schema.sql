@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS whitespace_opportunities (
     pricing_strategy TEXT NOT NULL,
     core_features JSONB DEFAULT '[]'::jsonb,
     search_demand_keywords JSONB DEFAULT '[]'::jsonb,
+    venture_dossier JSONB DEFAULT '{}'::jsonb,
     osi_score NUMERIC(3,1) NOT NULL DEFAULT 9.0,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );

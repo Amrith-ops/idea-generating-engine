@@ -200,40 +200,87 @@ graph TD
 
 ---
 
+## ADR-009: Reverse-Engineering IdeaBrowser 10-Module Venture Dossier Architecture
+
+### Context & Problem
+While technical unbundling wedges and OSI scores pinpointed viable software gaps, founders were still left with abstract bullet points. They lacked:
+1. Ground-truth human scenes of how a specific employee works late at night dealing with incumbent software friction.
+2. 4-quadrant visual telemetry with deep slideout inspection sheets.
+3. Cynical startup graveyard postmortems explaining why previous attempts died (e.g. API rate limit traps or connector bloat).
+4. Concrete adversarial verdicts (4 Reasons to Build vs 4 Reasons Not to Build).
+5. 5-bar founder skill radar meters with early death traps.
+6. A 4-step monetization value ladder (Lead Magnet $\rightarrow$ Frontend SKU $\rightarrow$ Core Upsell $\rightarrow$ Continuity Tier).
+7. Transparent napkin money math (Month-3 pilot cash flow vs Scale Ceiling ARR).
+
+### Decision
+1. **Database Schema**: Add `venture_dossier JSONB DEFAULT '{}'::jsonb` to `whitespace_opportunities` table.
+2. **Master Specification**: Author [`project_management/ideabrowser_research_framework.md`](file:///c:/ideas_brain/project_management/ideabrowser_research_framework.md) detailing the 5 investigative algorithms:
+   - *Behavioral Contradiction Scanner* (identifying user intent vs vendor pricing bloat).
+   - *3-Layer Triangulation* (Macro catalysts + Community receipts + Google SEO demand).
+   - *Adjacent Analog Pattern Matching* (applying proven offline or cross-industry business models).
+   - *Cynical Unit Economics & Graveyard Audit* (net margins, COGS, named defunct startups).
+   - *Zero-CAC Day-1 Distribution* (anti-search warnings + agency rev-share networks).
+3. **Agent 5 Enriched Prompting**: Enforce 16 structured JSON keys in [`pipeline/agents/venture_architect_agent.py`](file:///c:/ideas_brain/pipeline/agents/venture_architect_agent.py) strictly banning generic buzzwords and requiring real unit economics.
+4. **Editorial Modal UI**: Build a bespoke 10-module layout in [`dashboard/static/app.js`](file:///c:/ideas_brain/dashboard/static/app.js) and [`dashboard/static/style.css`](file:///c:/ideas_brain/dashboard/static/style.css) with interactive slideouts, animated skill bars, value ladders, and 1-click Markdown clipboard export.
+
+---
+
+## ADR-010: Multi-Model Resilience, Gemini 3.6-Flash Fallback & Streaming Queue Hardening
+
+### Context & Problem
+During end-to-end multi-agent execution, `gemini-3.5-flash` experienced sporadic `503 Service Unavailable (High Demand)` spikes on Google GenAI endpoints. Because the pipeline runs 5 sequential agent reasoning steps, cumulative retry delays exceeded the 180s SSE queue buffer in `dashboard/app.py`, causing stream aborts at Step 10 (*Venture Architect & SEO Demand*). Additionally, unstructured LLM keyword outputs and non-list variables caused occasional PostgreSQL `TEXT[]` array type mismatches.
+
+### Decision
+1. **Optimized Model Fallback Hierarchy**:
+   Update `BaseAgent.run_prompt_with_fallback()` to prioritize low-latency, high-availability models:
+   `models_to_try = ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.5-flash"]`
+   Execution latency dropped from 25s per agent down to 1–2s per agent with 0 high-demand errors.
+2. **Defensive Keyword & Object Parsing**:
+   Harden `VentureArchitectAgent` to safely parse string, dictionary (`{"keyword": "..."}` / `{"query": "..."}`), or primitive keyword outputs with built-in fallbacks.
+3. **PostgreSQL Array Sanitization**:
+   Sanitize all array inputs in [`pipeline/db_client.py`](file:///c:/ideas_brain/pipeline/db_client.py) (`insert_whitespace_opportunity`, `insert_opportunity`, `insert_competitor_cluster`) as `[str(x) for x in list if x]` to prevent `None` or invalid object injection into PostgreSQL `TEXT[]` columns.
+4. **Expanded Stream Buffer**:
+   Increase SSE event queue timeout in `dashboard/app.py` from 180s to 300s.
+
+---
+
 ## 📁 Repository Artifacts & File Structure
 
 ```text
 ideas_brain/
 ├── project_management/
-│   ├── architecture_decisions.md       <-- THIS COMPLETE MASTER RECORD
-│   ├── BACKLOG.md
-│   └── BUGS.md
-├── bugs_log.md                         <-- Chronological Root-Cause & Fix Registry (Bugs 1-7)
+│   ├── ideabrowser_research_framework.md <-- 27-Section IdeaBrowser Research Manifesto
+│   ├── architecture_decisions.md       <-- Master ADR Registry (ADR 001 - ADR 010)
+│   ├── BACKLOG.md                      <-- 5-Gate Validation Engine & Roadmap
+│   └── BUGS.md                         <-- Bug Register & RCA Records
+├── bugs_log.md                         <-- Chronological Root-Cause & Fix Registry (Bugs 1-8)
 ├── dashboard/
-│   ├── app.py                          <-- FastAPI streaming & REST endpoints
+│   ├── app.py                          <-- FastAPI streaming & REST endpoints (300s timeout)
 │   └── static/
-│       ├── index.html                  <-- 5-Pillar Decision Interface
-│       ├── app.js                      <-- Multi-view controller & live filter engine
-│       ├── style.css                   <-- Glassmorphic dark UI, cards, & meters
+│       ├── index.html                  <-- 5-Pillar Decision Interface & Dossier Modals
+│       ├── app.js                      <-- 10-Module Dossier Renderer, Multi-view Controller
+│       ├── style.css                   <-- Master Dark CSS (Radars, Quadrants, Math Tables)
 │       └── cluster_graph_visual_ui.md  <-- 2D Canvas Graph Visual Specification
 ├── pipeline/
 │   ├── agents/                         <-- 5-AGENT COLLABORATIVE AI LOOP
-│   │   ├── base_agent.py
-│   │   ├── semantic_normalizer_agent.py
-│   │   ├── category_strategist_agent.py
-│   │   ├── cluster_formulator_agent.py
-│   │   ├── red_team_auditor_agent.py
-│   │   ├── venture_architect_agent.py
-│   │   └── orchestrator.py
+│   │   ├── base_agent.py               # Gemini 3.6-Flash / 3-Flash-Preview Fallback
+│   │   ├── semantic_normalizer_agent.py # Agent 1: JTBD Normalizer
+│   │   ├── category_strategist_agent.py # Agent 2: Formula Weight Tuner
+│   │   ├── cluster_formulator_agent.py  # Agent 3: Competitor Archetype Formulator
+│   │   ├── red_team_auditor_agent.py    # Agent 4: Adversarial Review Auditor
+│   │   ├── venture_architect_agent.py   # Agent 5: 10-Module Dossier Architect & SEO
+│   │   └── orchestrator.py             # Central Multi-Agent Orchestrator
 │   ├── live_review_harvester.py
 │   ├── competitor_clustering_engine.py
 │   ├── enrich_all_clusters.py
+│   ├── enrich_whitespace_dossiers.py   <-- Batch 10-Module Dossier Enrichment Engine
 │   ├── whitespace_omission_analyzer.py
-│   ├── keyword_volume_analyzer.py
-│   ├── db_client.py
-│   └── gemini_analyzer.py
+│   ├── keyword_volume_analyzer.py      <-- Live Google Autocomplete & Trends Engine
+│   ├── pain_graph_builder.py           <-- 2D Force Graph Engine
+│   ├── db_client.py                    <-- PostgreSQL Client with JSONB & Array Sanitization
+│   └── obsidian_exporter.py
 └── db/
-    └── 01_schema.sql
+    └── 01_schema.sql                   <-- PostgreSQL Tables & Indexes
 ```
 
 

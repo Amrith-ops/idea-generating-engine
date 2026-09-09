@@ -34,7 +34,7 @@ class BaseAgent:
         """
         Executes a prompt across resilient Gemini model fallbacks and returns parsed JSON.
         """
-        models_to_try = ["gemini-3.5-flash", "gemini-3-flash-preview"]
+        models_to_try = ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.5-flash"]
         
         if self.client:
             for model_name in models_to_try:

@@ -31,6 +31,8 @@ class DatabaseClient:
         with self.get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(sql)
+                # Migration check for existing databases
+                cur.execute("ALTER TABLE whitespace_opportunities ADD COLUMN IF NOT EXISTS venture_dossier JSONB DEFAULT '{}'::jsonb;")
             conn.commit()
         logging.info("Database schema initialized successfully.")
 
@@ -144,12 +146,14 @@ class DatabaseClient:
             osi_score = EXCLUDED.osi_score,
             mrr_potential = EXCLUDED.mrr_potential;
         """
+        payload = {
+            **opp_data,
+            "attacked_product_slugs": [str(x) for x in (opp_data.get("attacked_product_slugs") or [])],
+            "core_features": json.dumps(opp_data.get("core_features", []))
+        }
         with self.get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(sql, {
-                    **opp_data,
-                    "core_features": json.dumps(opp_data.get("core_features", []))
-                })
+                cur.execute(sql, payload)
             conn.commit()
 
     def insert_competitor_cluster(self, cluster_data: Dict[str, Any]):
@@ -176,7 +180,7 @@ class DatabaseClient:
             "cluster_name": cluster_data.get("cluster_name"),
             "cluster_theme": cluster_data.get("cluster_theme", ""),
             "target_tier": cluster_data.get("target_tier", "Mid-Market"),
-            "product_slugs": cluster_data.get("product_slugs", []),
+            "product_slugs": [str(x) for x in (cluster_data.get("product_slugs") or [])],
             "common_pains": json.dumps(cluster_data.get("common_pains", [])),
             "unaddressed_gaps": json.dumps(cluster_data.get("unaddressed_gaps", [])),
             "how_it_works": json.dumps(cluster_data.get("how_it_works", {}))
@@ -218,12 +222,12 @@ class DatabaseClient:
         INSERT INTO whitespace_opportunities (
             slug, category_slug, title, target_omission_summary,
             unaddressed_pain_slugs, attacked_cluster_slugs, unbundling_wedge,
-            target_icp, pricing_strategy, core_features, search_demand_keywords, osi_score
+            target_icp, pricing_strategy, core_features, search_demand_keywords, venture_dossier, osi_score
         )
         VALUES (
             %(slug)s, %(category_slug)s, %(title)s, %(target_omission_summary)s,
             %(unaddressed_pain_slugs)s, %(attacked_cluster_slugs)s, %(unbundling_wedge)s,
-            %(target_icp)s, %(pricing_strategy)s, %(core_features)s, %(search_demand_keywords)s, %(osi_score)s
+            %(target_icp)s, %(pricing_strategy)s, %(core_features)s, %(search_demand_keywords)s, %(venture_dossier)s, %(osi_score)s
         )
         ON CONFLICT (slug) DO UPDATE
         SET title = EXCLUDED.title,
@@ -231,6 +235,7 @@ class DatabaseClient:
             unbundling_wedge = EXCLUDED.unbundling_wedge,
             core_features = EXCLUDED.core_features,
             search_demand_keywords = EXCLUDED.search_demand_keywords,
+            venture_dossier = EXCLUDED.venture_dossier,
             osi_score = EXCLUDED.osi_score;
         """
         payload = {
@@ -238,13 +243,14 @@ class DatabaseClient:
             "category_slug": ws_data.get("category_slug"),
             "title": ws_data.get("title"),
             "target_omission_summary": ws_data.get("target_omission_summary", ""),
-            "unaddressed_pain_slugs": ws_data.get("unaddressed_pain_slugs", []),
-            "attacked_cluster_slugs": ws_data.get("attacked_cluster_slugs", []),
+            "unaddressed_pain_slugs": [str(x) for x in (ws_data.get("unaddressed_pain_slugs") or [])],
+            "attacked_cluster_slugs": [str(x) for x in (ws_data.get("attacked_cluster_slugs") or [])],
             "unbundling_wedge": ws_data.get("unbundling_wedge", ""),
             "target_icp": ws_data.get("target_icp", "SMB Founders"),
             "pricing_strategy": ws_data.get("pricing_strategy", "$49/mo flat rate"),
             "core_features": json.dumps(ws_data.get("core_features", [])),
             "search_demand_keywords": json.dumps(ws_data.get("search_demand_keywords", [])),
+            "venture_dossier": json.dumps(ws_data.get("venture_dossier", {})),
             "osi_score": ws_data.get("osi_score", 9.2)
         }
         with self.get_connection() as conn:
@@ -270,6 +276,13 @@ class DatabaseClient:
                     o["search_demand_keywords"] = json.loads(o["search_demand_keywords"])
                 except Exception:
                     o["search_demand_keywords"] = []
+            if isinstance(o.get("venture_dossier"), str):
+                try:
+                    o["venture_dossier"] = json.loads(o["venture_dossier"])
+                except Exception:
+                    o["venture_dossier"] = {}
+            elif not o.get("venture_dossier"):
+                o["venture_dossier"] = {}
         return opps
 
     def execute_query(self, query: str, params: tuple = ()):

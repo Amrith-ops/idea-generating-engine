@@ -10,10 +10,11 @@
 ## 🎯 Strategic Context & Objective
 
 The **Ideas Brain Discovery Pipeline** currently automates:
-1. **Taxonomy & Sector Ingestion** (1,887 pure software categories).
-2. **Negative Review Harvesting** (1★ to 3★ complaints from G2/Capterra/Reddit).
-3. **AI Disruption Synthesis** (Orbit 2 Micro-SaaS satellites, OSI scores, and dev timelines).
-4. **Live Google SEO Demand Validation** (Autocomplete stream, n-gram corpus counts, CPC intent).
+1. **Taxonomy & Sector Ingestion** (1,887 pure software categories across 33 macro sectors).
+2. **Negative Review Harvesting** (1★ to 3★ complaints from G2/Capterra/Reddit with idempotency hash indexing).
+3. **Autonomous 5-Agent AI Loop & Math Matrix** (Semantic normalizer, category weight strategist, deterministic distance math, cluster formulator, red-team review auditor, venture architect).
+4. **IdeaBrowser-Grade 10-Module Venture Dossiers** (16-key JSONB payloads, ground-truth workplace scenes, 4 interactive quadrants, adversarial verdicts, founder skill radars, value ladders, napkin money math).
+5. **Live Google SEO Demand Validation** (Autocomplete stream, 12-month Google Trends trajectory, n-gram corpus mining, commercial CPC intent).
 
 To achieve **$\ge 90\%$ deterministic confidence** and bridge the gap between **"Validated Idea Dossier"** and **"First $10,000 MRR"**, the following epics are scheduled in this backlog.
 
@@ -23,9 +24,10 @@ To achieve **$\ge 90\%$ deterministic confidence** and bridge the gap between **
 
 ```mermaid
 flowchart TB
-    subgraph CURRENT["✅ CURRENT CAPABILITIES"]
-        C1["Pain Corpus Mining"] --> C2["Google SEO Demand"]
-        C2 --> C3["OSI Scoring & Satellites"]
+    subgraph CURRENT["✅ CURRENT CAPABILITIES (COMPLETED)"]
+        C1["G2/Reddit Pain Mining & Idempotency"] --> C2["Autonomous 5-Agent AI Loop & Math Matrix"]
+        C2 --> C3["IdeaBrowser 10-Module Venture Dossiers"]
+        C3 --> C4["Live Google SEO Demand (Suggest & Trends)"]
     end
 
     subgraph VALIDATOR["🛡️ EPIC 0: 5-GATE 90% CONFIDENCE VALIDATOR"]

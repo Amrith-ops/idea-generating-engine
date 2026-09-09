@@ -621,7 +621,7 @@ def trigger_cluster_and_whitespace_stream(req: MineRequest):
     def event_stream():
         while True:
             try:
-                event = event_queue.get(timeout=180)
+                event = event_queue.get(timeout=300)
                 yield json.dumps(event, default=str) + "\n"
                 if event.get("type") in ("complete", "error") or event.get("progress_pct") == 100:
                     break
