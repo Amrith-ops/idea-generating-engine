@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
@@ -11,6 +11,7 @@ from pathlib import Path
 import pipeline.config
 from pipeline.db_client import DatabaseClient
 from pipeline.live_review_harvester import LiveReviewHarvester
+from pipeline.founder_fit_evaluator import FounderFitEvaluator, FounderProfile
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -539,11 +540,60 @@ def get_competitor_clusters(category_slug: Optional[str] = None):
 
     return clusters
 
+class FounderRecommendationRequest(BaseModel):
+    profile: Optional[Dict[str, Any]] = None
+    preset_id: Optional[str] = "solo_vibe_coder_india"
+    category_slug: Optional[str] = None
+    min_threshold: Optional[float] = 80.0
+    only_recommended: Optional[bool] = False
+
+@app.get("/api/founder-profile/presets")
+def get_founder_presets():
+    """
+    Returns pre-configured founder personas (e.g. Solo Vibe Coder from India).
+    """
+    return list(FounderFitEvaluator.PRESETS.values())
+
+@app.post("/api/founder-profile/recommendations")
+def get_founder_recommendations(req: Optional[FounderRecommendationRequest] = None):
+    """
+    Dynamically evaluates and ranks all Micro-SaaS opportunities against a founder's exact profile constraints.
+    """
+    try:
+        evaluator = FounderFitEvaluator()
+        req_profile = (req.profile if req else None) or {}
+        preset_id = req_profile.get("preset_id") or (req.preset_id if req else "solo_vibe_coder_india")
+        
+        if preset_id and preset_id in FounderFitEvaluator.PRESETS:
+            base_dict = FounderFitEvaluator.PRESETS[preset_id].copy()
+            base_dict.update({k: v for k, v in req_profile.items() if k != "preset_id"})
+            profile = FounderProfile(**base_dict)
+        elif req_profile:
+            profile = FounderProfile(**req_profile)
+        else:
+            profile = FounderProfile()
+
+        cat_slug = req.category_slug if req else None
+        only_rec = req.only_recommended if req else False
+
+        opps = db.get_whitespace_opportunities(cat_slug)
+        if not opps and cat_slug:
+            from pipeline.whitespace_omission_analyzer import WhitespaceOmissionAnalyzer
+            w_engine = WhitespaceOmissionAnalyzer(db=db)
+            res = w_engine.analyze_category_whitespace(cat_slug)
+            opps = res.get("whitespace_opportunities", [])
+
+        ranked = evaluator.rank_opportunities(opps, profile=profile, only_recommended=only_rec)
+        return ranked
+    except Exception as e:
+        logging.error(f"Error evaluating founder recommendations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/whitespace")
-def get_whitespace_opportunities(category_slug: Optional[str] = None):
+def get_whitespace_opportunities(category_slug: Optional[str] = None, founder_preset: Optional[str] = "solo_vibe_coder_india"):
     """
     Returns high-conviction white space Micro-SaaS opportunities
-    synthesized from cross-cluster pain omissions and validated with Google SEO demand.
+    synthesized from cross-cluster pain omissions, enriched with founder compatibility metrics.
     """
     opps = db.get_whitespace_opportunities(category_slug)
     if not opps and category_slug:
@@ -552,7 +602,13 @@ def get_whitespace_opportunities(category_slug: Optional[str] = None):
         res = w_engine.analyze_category_whitespace(category_slug)
         opps = res.get("whitespace_opportunities", [])
 
-    return opps
+    # Enrich with default founder compatibility scores
+    evaluator = FounderFitEvaluator()
+    preset_dict = FounderFitEvaluator.PRESETS.get(founder_preset, FounderFitEvaluator.PRESETS["solo_vibe_coder_india"])
+    profile = FounderProfile(**preset_dict)
+    ranked = evaluator.rank_opportunities(opps, profile=profile)
+
+    return ranked
 
 @app.get("/api/cluster-pain-graph")
 def get_cluster_pain_graph(category_slug: Optional[str] = None):

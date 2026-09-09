@@ -19,9 +19,9 @@ class LiveReviewHarvester:
     feeds them to Gemini AI, and syncs Supabase and Obsidian.
     """
 
-    def __init__(self):
+    def __init__(self, db: Optional[DatabaseClient] = None):
         self.ddgs = DDGS()
-        self.db = DatabaseClient()
+        self.db = db or DatabaseClient()
         self.exporter = ObsidianExporter()
         self.gemini = GeminiSaaSExtractor()
 

@@ -244,24 +244,51 @@ During end-to-end multi-agent execution, `gemini-3.5-flash` experienced sporadic
 
 ---
 
+## ADR-011: Founder-Idea Compatibility Matrix (FICM) & Dynamic Vibe-Coder Matcher
+
+### Context & Problem
+A micro-saas idea can have a high commercial Opportunity Score Index (OSI 9.5) but fail completely for a specific founder due to operational misalignment:
+1. **Domain Depth Barrier**: Heavy accounting/tax/legal tools require certified vertical domain knowledge or carry extreme liability.
+2. **Timezone Friction**: Founders operating from India (IST UTC+5:30) cannot conduct live US business-hour sales demo calls.
+3. **Part-Time Constraint**: A solo engineer working 2–3 hours/day cannot maintain complex 24/7 real-time infrastructure.
+4. **Distribution Vacuum**: A founder with zero marketing/sales skill will fail if the product relies on outbound cold calling rather than built-in app directories (e.g. Zendesk, Shopify, Chrome Web Store).
+5. **AI Vibe-Coding Scope**: The build must be modular (FastAPI + Supabase + Webhooks in 7–14 days) rather than requiring multi-month custom ML fine-tuning.
+
+### Decision
+1. **6-Dimension Mathematical Matrix (FICM)**:
+   Created [`pipeline/founder_fit_evaluator.py`](file:///c:/ideas_brain/pipeline/founder_fit_evaluator.py) evaluating every white space opportunity:
+   $$\text{Compatibility} = 10 \cdot \left(0.20 \cdot D_{\text{domain}} + 0.20 \cdot V_{\text{vibe}} + 0.25 \cdot D_{\text{cac}} + 0.15 \cdot T_{\text{async}} + 0.10 \cdot M_{\text{part}} + 0.10 \cdot E_{\text{extinct}}\right)$$
+2. **Automated Backend Filtering & Re-Ranking**:
+   - `GET /api/founder-profile/presets` delivers pre-configured founder personas.
+   - `POST /api/founder-profile/recommendations` calculates dynamic ranking and filters out disqualified ideas.
+   - `GET /api/whitespace` returns embedded `founder_compatibility` payloads.
+3. **Dynamic Frontend Control Deck**:
+   - **Founder AI Compatibility Bar**: Prominent banner with 8 active constraint pills and 1-click `🎯 Filter by My Founder Fit (≥80%)` toggle.
+   - **Card-Level Telemetry**: Glowing `⭐ 99% FOUNDER FIT` badges, `🛒 Ecosystem` chips, and the `🧙‍♂️ WHY YOU WIN AS A SOLO VIBE CODER` callout with exact accounts to $10k MRR.
+   - **Dossier Module 7 Integration**: Full 6-dimension radar cards, India remote dollar leverage (~₹4.2L - ₹8.4L/mo net cashflow), and a 14-day vibe-coding launch plan.
+   - **Interactive Profile Customizer**: Modal enabling founders to tune their technical background, domain depth, time, location, and target MRR.
+
+---
+
 ## 📁 Repository Artifacts & File Structure
 
 ```text
 ideas_brain/
 ├── project_management/
 │   ├── ideabrowser_research_framework.md <-- 27-Section IdeaBrowser Research Manifesto
-│   ├── architecture_decisions.md       <-- Master ADR Registry (ADR 001 - ADR 010)
+│   ├── architecture_decisions.md       <-- Master ADR Registry (ADR 001 - ADR 011)
 │   ├── BACKLOG.md                      <-- 5-Gate Validation Engine & Roadmap
 │   └── BUGS.md                         <-- Bug Register & RCA Records
 ├── bugs_log.md                         <-- Chronological Root-Cause & Fix Registry (Bugs 1-8)
 ├── dashboard/
-│   ├── app.py                          <-- FastAPI streaming & REST endpoints (300s timeout)
+│   ├── app.py                          <-- FastAPI streaming, whitespace & founder endpoints
 │   └── static/
-│       ├── index.html                  <-- 5-Pillar Decision Interface & Dossier Modals
-│       ├── app.js                      <-- 10-Module Dossier Renderer, Multi-view Controller
-│       ├── style.css                   <-- Master Dark CSS (Radars, Quadrants, Math Tables)
+│       ├── index.html                  <-- 5-Pillar Decision Interface, Founder Bar & Modals
+│       ├── app.js                      <-- 10-Module Dossier Renderer, FICM Controller
+│       ├── style.css                   <-- Master Dark CSS (FICM Radars, Founder Banners)
 │       └── cluster_graph_visual_ui.md  <-- 2D Canvas Graph Visual Specification
 ├── pipeline/
+│   ├── founder_fit_evaluator.py        <-- 6-Dimension FICM Evaluator & Ranking Engine
 │   ├── agents/                         <-- 5-AGENT COLLABORATIVE AI LOOP
 │   │   ├── base_agent.py               # Gemini 3.6-Flash / 3-Flash-Preview Fallback
 │   │   ├── semantic_normalizer_agent.py # Agent 1: JTBD Normalizer
@@ -282,5 +309,6 @@ ideas_brain/
 └── db/
     └── 01_schema.sql                   <-- PostgreSQL Tables & Indexes
 ```
+
 
 

@@ -151,11 +151,49 @@
         </div>
       </div>
 
+      <!-- FOUNDER FIT & OPPORTUNITY RECOMMENDATION BAR -->
+      <div class="founder-matcher-banner" id="founder-matcher-banner">
+        <div class="founder-matcher-left">
+          <div class="founder-matcher-title-row">
+            <span class="founder-sparkle-icon">🧙‍♂️</span>
+            <div>
+              <div class="founder-matcher-heading">
+                AI Founder Fit & Opportunity Matcher: <span class="gradient-text">Solo Vibe Coder Filter</span>
+              </div>
+              <p class="founder-matcher-sub">
+                Auto-ranked for: <b>Software Engineer</b> • <b>Zero Domain Depth</b> • <b>$5k–$10k MRR</b> • <b>🇮🇳 India (100% Async US Sales)</b> • <b>⏱️ 2–3h/day Part-Time</b> • <b>🛒 App Stores (Zendesk/Shopify/Chrome)</b> • <b>⚡ Vibe Coding</b>
+              </p>
+            </div>
+          </div>
+          <div class="founder-criteria-pills">
+            <span class="f-pill active" title="100% self-serve async US dollar sales with zero live demo calls">🇮🇳 Async US Dollar Sales</span>
+            <span class="f-pill active" title="Low domain barrier - AI can scaffold the domain logic in 1 day">🧠 0 Prior Domain Depth</span>
+            <span class="f-pill active" title="Part-time solo operator 2-3h/day maintenance">⏱️ 2-3h/day Part-Time</span>
+            <span class="f-pill active" title="Built-in organic distribution via Zendesk, Shopify, Chrome, Slack, Zapier">🛒 App Store Distribution</span>
+            <span class="f-pill active" title="FastAPI + Supabase + Webhooks modular stack in 7-14 days">⚡ 7-14d Vibe-Codeable</span>
+            <span class="f-pill active" title="Targets $5k - $10k monthly cashflow ($60k-$120k ARR, ~₹4.2L-₹8.4L/mo)">🎯 $5k-$10k MRR Target</span>
+          </div>
+        </div>
+        <div class="founder-matcher-right">
+          <button class="btn-founder-toggle active" id="btn-founder-toggle" onclick="toggleFounderFitOnly()">
+            <span class="toggle-indicator">✓</span>
+            <span id="founder-toggle-label">🎯 Filter by My Founder Fit (≥80%)</span>
+          </button>
+          <div class="founder-match-stat" id="founder-match-stat">
+            <span class="match-count" id="match-count-num">--</span> / <span id="total-opps-num">--</span> Ideas Compatible
+          </div>
+          <button class="btn-customize-profile" onclick="openProfileCustomizerModal()" title="Customize your founder constraints & re-score all micro-saas ideas">
+            ⚙️ Customize Profile
+          </button>
+        </div>
+      </div>
+
       <!-- FILTER & SEARCH TOOLBAR -->
       <div class="filter-toolbar">
         <div class="filter-btn-group">
           <span class="filter-label">Quick Filters:</span>
           <button class="filter-pill active" id="ws-flt-all" onclick="filterWhitespaceOpportunities('all')">🔥 All Ideas (<span id="ws-count-all">0</span>)</button>
+          <button class="filter-pill" id="ws-flt-founder-top" onclick="filterWhitespaceOpportunities('founder-top')">🧙‍♂️ 90%+ Founder Fit (<span id="ws-count-founder-top">0</span>)</button>
           <button class="filter-pill" id="ws-flt-high-osi" onclick="filterWhitespaceOpportunities('high-osi')">⭐ Top ROI Score (9.0+)</button>
           <button class="filter-pill" id="ws-flt-rapid" onclick="filterWhitespaceOpportunities('rapid')">⚡ Fast Build (≤14 Days)</button>
           <button class="filter-pill" id="ws-flt-high-acv" onclick="filterWhitespaceOpportunities('high-acv')">💰 Higher Price ($49+/mo)</button>
@@ -444,6 +482,113 @@
         </div>
         <div id="hierarchy-tree-container" class="hierarchy-tree-container">
           <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL OVERLAY: FOUNDER PROFILE & FICM CRITERIA CUSTOMIZER -->
+    <div id="profile-modal-overlay" class="modal-overlay hidden" onclick="closeProfileCustomizerModal(event)">
+      <div class="modal-card profile-modal-card" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeProfileCustomizerModal()">&times;</button>
+        <div class="modal-header-evidence">
+          <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.25rem;">
+            <span style="font-size:1.6rem;">🧙‍♂️</span>
+            <h3 style="margin:0;">Founder-Idea Compatibility Profile Customizer</h3>
+          </div>
+          <p>Configure your 8 founder constraints. The AI Discovery Engine will mathematically re-rank and filter all micro-saas ideas against your unique operational situation.</p>
+        </div>
+
+        <div class="profile-form-grid">
+          <!-- 1. Technical Background -->
+          <div class="profile-form-group">
+            <label class="p-label">1. Technical Background & Engineering</label>
+            <select id="prof-tech-bg" class="custom-select">
+              <option value="software_engineer" selected>💻 Software Engineer (Can read & scaffold full-stack code)</option>
+              <option value="no_code_builder">🧩 No-Code / Low-Code Builder (Bubble, Make, Zapier)</option>
+              <option value="non_technical">👔 Non-Technical Operator / Marketer</option>
+            </select>
+          </div>
+
+          <!-- 2. Domain Knowledge Depth -->
+          <div class="profile-form-group">
+            <label class="p-label">2. Existing Industry Domain Knowledge</label>
+            <select id="prof-domain-depth" class="custom-select">
+              <option value="zero_domain_depth" selected>🧠 Zero Prior Knowledge (Need AI to scaffold domain logic)</option>
+              <option value="general_b2b_knowledge">📈 General B2B / SaaS Knowledge</option>
+              <option value="deep_industry_expert">🔬 Deep Industry Specialist (10+ yrs in vertical)</option>
+            </select>
+          </div>
+
+          <!-- 3. Target MRR Goal -->
+          <div class="profile-form-group">
+            <label class="p-label">3. Target Monthly Cashflow Goal</label>
+            <select id="prof-target-mrr" class="custom-select">
+              <option value="5k_to_10k_mrr" selected>🎯 $5k to $10k MRR / mo (~₹4.2L to ₹8.4L/mo Net Cashflow)</option>
+              <option value="1k_to_3k_mrr">🌱 $1k to $3k MRR / mo (Quick validation)</option>
+              <option value="10k_to_25k_mrr">🚀 $10k to $25k MRR / mo (Scaled solo engine)</option>
+              <option value="50k_plus_mrr">🦄 $50k+ MRR / mo (High scale venture)</option>
+            </select>
+          </div>
+
+          <!-- 4. Location & Timezone -->
+          <div class="profile-form-group">
+            <label class="p-label">4. Founder Location & Dollar Leverage</label>
+            <select id="prof-location" class="custom-select">
+              <option value="india_remote" selected>🇮🇳 India / IST (Requires 100% Async Sales, No Live US Demos)</option>
+              <option value="asia_latam_remote">🌏 Asia / LATAM Remote (Async Dollar Leverage)</option>
+              <option value="us_eu_local">🇺🇸 North America / EU Local (Can do live sales calls)</option>
+            </select>
+          </div>
+
+          <!-- 5. Time Commitment -->
+          <div class="profile-form-group">
+            <label class="p-label">5. Available Time Commitment</label>
+            <select id="prof-time-hours" class="custom-select">
+              <option value="2_to_3_hours_part_time" selected>⏱️ 2 to 3 Hours / Day (Part-Time Solo Side-Hustle)</option>
+              <option value="1_hour_weekend">⏳ 1 Hour / Day (Weekend project)</option>
+              <option value="4_to_6_hours_semifull">⌛ 4 to 6 Hours / Day (Semi-Full-Time)</option>
+              <option value="full_time_dedicated">🚀 8+ Hours / Day (Full-Time Dedicated)</option>
+            </select>
+          </div>
+
+          <!-- 6. Marketing & Distribution Skill -->
+          <div class="profile-form-group">
+            <label class="p-label">6. Marketing & Distribution Channel</label>
+            <select id="prof-distribution" class="custom-select">
+              <option value="app_store_directory_only" selected>🛒 Zero Marketing / Needs Built-in App Stores (Zendesk/Shopify/Chrome)</option>
+              <option value="organic_seo_content">📝 Organic SEO & Cold Outbound</option>
+              <option value="community_reddit_social">💬 Community & Social Selling</option>
+            </select>
+          </div>
+
+          <!-- 7. Build Velocity / Vibe Coding -->
+          <div class="profile-form-group">
+            <label class="p-label">7. Build Velocity & AI Vibe Coding</label>
+            <select id="prof-vibe-coding" class="custom-select">
+              <option value="vibe_coding_ai_scaffolding" selected>⚡ AI Vibe Coding (FastAPI + Supabase + Webhooks in 7-14 Days)</option>
+              <option value="traditional_software_eng">🔨 Traditional Deep Engineering</option>
+            </select>
+          </div>
+
+          <!-- 8. Minimum Match Threshold -->
+          <div class="profile-form-group">
+            <label class="p-label">8. Minimum Compatibility Match Filter</label>
+            <select id="prof-match-threshold" class="custom-select">
+              <option value="80" selected>⭐ 80%+ Compatibility (Recommended)</option>
+              <option value="90">🌟 90%+ Strict High-Fit Matches</option>
+              <option value="70">🔍 70%+ Relaxed Matches</option>
+              <option value="0">🔥 Show All Ideas (Unfiltered)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="profile-modal-actions">
+          <button class="btn-secondary" onclick="resetFounderProfileToDefault()">
+            🔄 Reset to Solo Vibe Coder Default
+          </button>
+          <button class="btn-primary" onclick="saveAndApplyFounderProfile()" style="background:linear-gradient(135deg, #10B981 0%, #059669 100%);">
+            💾 Apply Profile & Re-Rank Ideas &rarr;
+          </button>
         </div>
       </div>
     </div>

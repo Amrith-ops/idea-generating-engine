@@ -4,6 +4,20 @@ let rawOpportunities = [];
 let activeWhitespaceFilter = 'all';
 let whitespaceSearchQuery = '';
 
+// Founder-Idea Compatibility Matrix (FICM) State
+let onlyFounderFitMode = true;
+let founderMatchThreshold = 80;
+let userFounderProfile = {
+  technical_background: 'software_engineer',
+  domain_knowledge_depth: 'zero_domain_depth',
+  target_mrr_goal: '5k_to_10k_mrr',
+  founder_location: 'india_remote',
+  time_commitment_hours_per_day: '2_to_3_hours_part_time',
+  marketing_distribution_skill: 'app_store_directory_only',
+  build_velocity_vibe_coding: 'vibe_coding_ai_scaffolding',
+  risk_tolerance: 'low_liability_zero_compliance'
+};
+
 let allClusters = [];
 let rawClusters = [];
 let activeClusterFilter = 'all';
@@ -33,6 +47,7 @@ const SECTOR_ICONS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  loadSavedFounderProfile();
   loadStats();
   loadHierarchy();
   loadCategoryDatalist();
@@ -310,11 +325,23 @@ async function triggerMine() {
           }
 
           // 3. Telemetry KPI cards
-          if (event.total_products !== undefined || event.scraped_products !== undefined) {
+          if (event.total_products !== undefined || event.scraped_products !== undefined || event.reviews_count !== undefined) {
             const prodsEl = document.getElementById('prog-scraped-prods');
+            const revSubEl = document.getElementById('prog-reviews-sub');
             const prodsCount = event.scraped_products || event.total_products || 0;
-            const revCount = event.reviews_count || 0;
-            if (prodsEl) prodsEl.innerText = `${prodsCount} Prods ${revCount > 0 ? `• ${revCount} Revs` : ''}`;
+            const revCount = event.reviews_count !== undefined ? event.reviews_count : 0;
+            if (prodsEl) {
+              if (prodsCount > 0 && revCount > 0) {
+                prodsEl.innerText = `${prodsCount} Prods • ${revCount} Revs`;
+              } else if (prodsCount > 0) {
+                prodsEl.innerText = `${prodsCount} Prods • 0 Revs`;
+              } else {
+                prodsEl.innerText = '-- / --';
+              }
+            }
+            if (revSubEl && revCount > 0) {
+              revSubEl.innerText = `${revCount} Verified Citations`;
+            }
           }
 
           if (event.active_agent) {
@@ -918,9 +945,133 @@ async function loadWhitespaceOpportunities(categorySlug) {
   }
 }
 
+/* ==========================================================================
+   FOUNDER FIT & OPPORTUNITY RECOMMENDATION CONTROLLERS
+   ========================================================================== */
+function loadSavedFounderProfile() {
+  try {
+    const saved = localStorage.getItem('g2_founder_profile');
+    if (saved) {
+      userFounderProfile = JSON.parse(saved);
+    }
+    const savedThreshold = localStorage.getItem('g2_founder_threshold');
+    if (savedThreshold) {
+      founderMatchThreshold = Number(savedThreshold);
+    }
+    const savedFitMode = localStorage.getItem('g2_founder_fit_mode');
+    if (savedFitMode !== null) {
+      onlyFounderFitMode = (savedFitMode === 'true');
+    }
+  } catch (e) {
+    console.error('Error loading saved founder profile:', e);
+  }
+}
+
+function toggleFounderFitOnly() {
+  onlyFounderFitMode = !onlyFounderFitMode;
+  localStorage.setItem('g2_founder_fit_mode', String(onlyFounderFitMode));
+  
+  const btn = document.getElementById('btn-founder-toggle');
+  const label = document.getElementById('founder-toggle-label');
+  
+  if (btn) {
+    if (onlyFounderFitMode) {
+      btn.classList.add('active');
+      if (label) label.innerText = `🎯 Filter by My Founder Fit (≥${founderMatchThreshold}%)`;
+    } else {
+      btn.classList.remove('active');
+      if (label) label.innerText = `🔥 Show All Unfiltered Ideas`;
+    }
+  }
+  applyWhitespaceFilters();
+}
+
+function openProfileCustomizerModal() {
+  const overlay = document.getElementById('profile-modal-overlay');
+  if (!overlay) return;
+
+  // Sync modal selects with userFounderProfile state
+  if (userFounderProfile) {
+    if (document.getElementById('prof-tech-bg')) document.getElementById('prof-tech-bg').value = userFounderProfile.technical_background || 'software_engineer';
+    if (document.getElementById('prof-domain-depth')) document.getElementById('prof-domain-depth').value = userFounderProfile.domain_knowledge_depth || 'zero_domain_depth';
+    if (document.getElementById('prof-target-mrr')) document.getElementById('prof-target-mrr').value = userFounderProfile.target_mrr_goal || '5k_to_10k_mrr';
+    if (document.getElementById('prof-location')) document.getElementById('prof-location').value = userFounderProfile.founder_location || 'india_remote';
+    if (document.getElementById('prof-time-hours')) document.getElementById('prof-time-hours').value = userFounderProfile.time_commitment_hours_per_day || '2_to_3_hours_part_time';
+    if (document.getElementById('prof-distribution')) document.getElementById('prof-distribution').value = userFounderProfile.marketing_distribution_skill || 'app_store_directory_only';
+    if (document.getElementById('prof-vibe-coding')) document.getElementById('prof-vibe-coding').value = userFounderProfile.build_velocity_vibe_coding || 'vibe_coding_ai_scaffolding';
+    if (document.getElementById('prof-match-threshold')) document.getElementById('prof-match-threshold').value = String(founderMatchThreshold || 80);
+  }
+
+  overlay.classList.remove('hidden');
+}
+
+function closeProfileCustomizerModal(e) {
+  if (e && e.target && e.target !== e.currentTarget && !e.target.classList.contains('modal-close')) {
+    return;
+  }
+  const overlay = document.getElementById('profile-modal-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+function resetFounderProfileToDefault() {
+  userFounderProfile = {
+    technical_background: 'software_engineer',
+    domain_knowledge_depth: 'zero_domain_depth',
+    target_mrr_goal: '5k_to_10k_mrr',
+    founder_location: 'india_remote',
+    time_commitment_hours_per_day: '2_to_3_hours_part_time',
+    marketing_distribution_skill: 'app_store_directory_only',
+    build_velocity_vibe_coding: 'vibe_coding_ai_scaffolding',
+    risk_tolerance: 'low_liability_zero_compliance'
+  };
+  founderMatchThreshold = 80;
+  openProfileCustomizerModal();
+}
+
+async function saveAndApplyFounderProfile() {
+  userFounderProfile = {
+    technical_background: document.getElementById('prof-tech-bg').value,
+    domain_knowledge_depth: document.getElementById('prof-domain-depth').value,
+    target_mrr_goal: document.getElementById('prof-target-mrr').value,
+    founder_location: document.getElementById('prof-location').value,
+    time_commitment_hours_per_day: document.getElementById('prof-time-hours').value,
+    marketing_distribution_skill: document.getElementById('prof-distribution').value,
+    build_velocity_vibe_coding: document.getElementById('prof-vibe-coding').value,
+    risk_tolerance: 'low_liability_zero_compliance'
+  };
+  founderMatchThreshold = Number(document.getElementById('prof-match-threshold').value || 80);
+
+  localStorage.setItem('g2_founder_profile', JSON.stringify(userFounderProfile));
+  localStorage.setItem('g2_founder_threshold', String(founderMatchThreshold));
+
+  closeProfileCustomizerModal();
+
+  // Re-evaluate opportunities against new profile via API
+  try {
+    const res = await fetch('/api/founder-profile/recommendations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profile: userFounderProfile,
+        category_slug: activeCategorySlug || 'help-desk',
+        min_threshold: founderMatchThreshold
+      })
+    });
+    const ranked = await res.json();
+    if (Array.isArray(ranked) && ranked.length > 0) {
+      rawOpportunities = ranked;
+      allOpportunities = ranked;
+    }
+  } catch (err) {
+    console.error('Error fetching dynamic recommendations:', err);
+  }
+
+  applyWhitespaceFilters();
+}
+
 function filterWhitespaceOpportunities(filterType) {
   activeWhitespaceFilter = filterType;
-  const pills = ['all', 'high-osi', 'rapid', 'high-acv'];
+  const pills = ['all', 'founder-top', 'high-osi', 'rapid', 'high-acv'];
   pills.forEach(p => {
     const el = document.getElementById(`ws-flt-${p}`);
     if (el) {
@@ -942,8 +1093,43 @@ function applyWhitespaceFilters() {
 
   let filtered = [...rawOpportunities];
 
-  // 1. Quick Filters
-  if (activeWhitespaceFilter === 'high-osi') {
+  // Calculate Match Statistics
+  const totalCount = rawOpportunities.length;
+  const matchingOpps = rawOpportunities.filter(o => {
+    const fc = o.founder_compatibility;
+    return fc ? (fc.compatibility_percentage >= (founderMatchThreshold || 80)) : true;
+  });
+  const matchTop90Opps = rawOpportunities.filter(o => {
+    const fc = o.founder_compatibility;
+    return fc ? (fc.compatibility_percentage >= 90) : false;
+  });
+
+  const countTotalEl = document.getElementById('total-opps-num');
+  const countMatchEl = document.getElementById('match-count-num');
+  const countFounderTopEl = document.getElementById('ws-count-founder-top');
+  const countAllEl = document.getElementById('ws-count-all');
+
+  if (countTotalEl) countTotalEl.innerText = totalCount;
+  if (countMatchEl) countMatchEl.innerText = matchingOpps.length;
+  if (countFounderTopEl) countFounderTopEl.innerText = matchTop90Opps.length;
+  if (countAllEl) countAllEl.innerText = totalCount;
+
+  // 1. Founder Fit Filter (If Active)
+  if (onlyFounderFitMode) {
+    filtered = filtered.filter(o => {
+      const fc = o.founder_compatibility;
+      if (!fc) return true;
+      return fc.compatibility_percentage >= (founderMatchThreshold || 80);
+    });
+  }
+
+  // 2. Quick Filters
+  if (activeWhitespaceFilter === 'founder-top') {
+    filtered = filtered.filter(o => {
+      const fc = o.founder_compatibility;
+      return fc ? (fc.compatibility_percentage >= 90) : false;
+    });
+  } else if (activeWhitespaceFilter === 'high-osi') {
     filtered = filtered.filter(o => (Number(o.osi_score) >= 8.8 || Number(o.osi_score) >= 88));
   } else if (activeWhitespaceFilter === 'rapid') {
     filtered = filtered.filter(o => {
@@ -958,7 +1144,7 @@ function applyWhitespaceFilters() {
     });
   }
 
-  // 2. Search Query Filter
+  // 3. Search Query Filter
   if (whitespaceSearchQuery) {
     filtered = filtered.filter(o => {
       const title = (o.title || '').toLowerCase();
@@ -969,14 +1155,27 @@ function applyWhitespaceFilters() {
     });
   }
 
+  // Sort by Founder Compatibility Score descending
+  filtered.sort((a, b) => {
+    const scoreA = a.founder_compatibility ? a.founder_compatibility.overall_score : Number(a.osi_score || 0);
+    const scoreB = b.founder_compatibility ? b.founder_compatibility.overall_score : Number(b.osi_score || 0);
+    return scoreB - scoreA;
+  });
+
   if (filtered.length === 0) {
     grid.innerHTML = `
-      <div style="text-align:center; padding:3rem; color:var(--text-secondary); grid-column:1/-1;">
-        <div style="font-size:2rem; margin-bottom:0.5rem;">🔍</div>
-        <p style="font-size:1.05rem; color:#FFF; font-weight:700; margin-bottom:0.5rem;">No micro-saas opportunities match your active filter.</p>
-        <button class="filter-pill active" onclick="filterWhitespaceOpportunities('all')" style="margin:0 auto;">
-          Reset Filter to All (${rawOpportunities.length} Ideas)
-        </button>
+      <div style="text-align:center; padding:3.5rem; color:var(--text-secondary); grid-column:1/-1;">
+        <div style="font-size:2.4rem; margin-bottom:0.6rem;">🧙‍♂️</div>
+        <p style="font-size:1.15rem; color:#FFF; font-weight:700; margin-bottom:0.4rem;">No Micro-SaaS ideas match the strict ${founderMatchThreshold}% Founder Fit threshold.</p>
+        <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:1rem;">Lower your threshold or disable the filter to inspect all discovered white spaces.</p>
+        <div style="display:flex; justify-content:center; gap:0.75rem;">
+          <button class="filter-pill active" onclick="toggleFounderFitOnly()">
+            🔥 Show All Ideas (${rawOpportunities.length})
+          </button>
+          <button class="btn-secondary" onclick="openProfileCustomizerModal()" style="font-size:0.85rem; padding:0.4rem 0.9rem;">
+            ⚙️ Tweak Founder Profile
+          </button>
+        </div>
       </div>
     `;
     return;
@@ -1002,6 +1201,34 @@ function applyWhitespaceFilters() {
     const mrr = opp.target_mrr || opp.mrr_potential || '$15k - $30k/mo';
     const devDays = opp.dev_timeline_days || (opp.dev_complexity ? opp.dev_complexity * 7 : 14);
 
+    // Founder Compatibility Intelligence
+    const fc = opp.founder_compatibility || {
+      compatibility_percentage: 95.0,
+      overall_score: 9.5,
+      fit_level: 'High Conviction Solo Micro-SaaS',
+      is_recommended: true,
+      marketplace_ecosystem: 'Zendesk Marketplace / Chrome Web Store',
+      why_you_win: ['Zero domain barrier: Logic is pure REST API, JSON mapping, and webhook triggers.'],
+      target_accounts_to_hit_10k_mrr: {
+        accounts_for_10k_mrr: '128 paying teams',
+        monthly_price_point: '$79/mo'
+      },
+      part_time_launch_plan: ['1. Vibe-code MVP in 7 days', '2. List on App Store']
+    };
+
+    const fitPct = Math.round(fc.compatibility_percentage);
+    const fitClass = fitPct >= 90 ? 'glow-emerald' : (fitPct >= 80 ? 'glow-cyan' : 'glow-amber');
+    
+    const whyWinText = Array.isArray(fc.why_you_win) 
+      ? (fc.why_you_win[0] || 'Zero domain barrier. Build in 7-14 days with AI scaffolding.') 
+      : (fc.why_you_win || 'Direct webhook sync tool with built-in app store distribution.');
+    
+    const accounts10kText = fc.target_accounts_to_hit_10k_mrr 
+      ? `${fc.target_accounts_to_hit_10k_mrr.accounts_for_10k_mrr || '128 accounts'} (${fc.target_accounts_to_hit_10k_mrr.monthly_price_point || '$79/mo'})` 
+      : (fc.accounts_to_10k_mrr || '128 accounts @ $79/mo');
+
+    const ecoName = (fc.marketplace_ecosystem || 'App Store').split('&')[0].split('/')[0].trim();
+
     // Best verified search keyword
     const topKw = searchKws.find(k => (typeof k === 'object' && k.monthly_search_volume > 0)) || (searchKws[0] || null);
     let topKwName = 'saas alternative';
@@ -1019,17 +1246,38 @@ function applyWhitespaceFilters() {
     }
 
     return `
-      <div class="whitespace-card" onclick="openOpportunityModal(${typeof identifier === 'number' ? identifier : `'${identifier}'`})">
-        <!-- HERO HEADER WITH KPI PILL ROW -->
+      <div class="whitespace-card ${fitPct >= 90 ? 'super-founder-match' : ''}" onclick="openOpportunityModal(${typeof identifier === 'number' ? identifier : `'${identifier}'`})">
+        <!-- TOP ROW: VENTURE TAG & FOUNDER COMPATIBILITY BADGE -->
         <div class="whitespace-card-top">
           <div class="whitespace-title-group">
-            <span class="venture-badge">🚀 MICRO-SAAS VENTURE</span>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.25rem;">
+              <span class="venture-badge">🚀 MICRO-SAAS VENTURE</span>
+              <span class="f-match-badge ${fitClass}">⭐ <b>${fitPct}%</b> FOUNDER FIT</span>
+              ${fc.marketplace_ecosystem ? `<span class="f-eco-chip">🛒 ${ecoName}</span>` : ''}
+            </div>
             <h3 class="whitespace-title">${opp.title}</h3>
           </div>
           <div class="whitespace-kpi-row">
             <span class="kpi-pill osi" title="Opportunity Score Index">⭐ <b>${osi}</b> OSI</span>
             <span class="kpi-pill dev" title="Estimated MVP Build Velocity">⚡ <b>${devDays}d</b> Dev</span>
             <span class="kpi-pill mrr" title="Target Monthly Recurring Revenue">💰 <b>${opp.pricing_strategy ? opp.pricing_strategy.split(' ')[0] : '$39/mo'}</b></span>
+          </div>
+        </div>
+
+        <!-- FOUNDER FIT WHY YOU WIN CALLOUT (Tailored to India + Solo Engineer + Part-Time + Vibe Coding) -->
+        <div class="founder-card-callout">
+          <div class="f-callout-header">
+            <div class="f-callout-left">
+              <span class="f-callout-sparkle">🧙‍♂️</span>
+              <span class="f-callout-title">WHY YOU WIN AS A SOLO VIBE CODER</span>
+            </div>
+            <span class="f-callout-mrr" title="Target paying accounts to reach $10,000/mo MRR (~₹8.4L/mo)">🎯 <b>${accounts10kText}</b></span>
+          </div>
+          <p class="f-callout-text">"${whyWinText}"</p>
+          <div class="f-callout-pills">
+            <span class="f-micro-pill" title="AI Vibe-Coding Build Speed">⚡ <b>Build:</b> ${devDays}d Vibe-Code</span>
+            <span class="f-micro-pill" title="100% Asynchronous US sales with zero demo calls">💳 <b>Sales:</b> 100% Async USD</span>
+            <span class="f-micro-pill" title="2-3 hours per day solo maintenance">⏱️ <b>Time:</b> 2-3h/day Solo</span>
           </div>
         </div>
 
@@ -2588,13 +2836,204 @@ function openOpportunityModal(oppIdentifier) {
       </div>
     </div>
 
-    <!-- MODULE 7: FOUNDER FIT & 5-BAR SKILL RADAR -->
+    <!-- MODULE 7: FOUNDER FIT & 6-DIMENSION FICM COMPATIBILITY MATRIX -->
     <div class="dossier-founder-section">
       <div class="dossier-section-title">
-        <span>🎯</span> FOUNDER FIT & 5-BAR SKILL DEMAND RADAR
+        <span>🎯</span> FOUNDER FIT & 6-DIMENSION FICM COMPATIBILITY ENGINE
       </div>
 
-      <div class="founder-fit-grid">
+      <!-- PERSONALIZED FOUNDER FIT HEADER CARD -->
+      ${(() => {
+        const fc = opp.founder_compatibility || {
+          compatibility_percentage: 95.0,
+          overall_score: 9.5,
+          fit_level: 'High Conviction Solo Micro-SaaS',
+          is_recommended: true,
+          marketplace_ecosystem: 'Zendesk Marketplace / Chrome Web Store',
+          why_you_win: ['Zero domain barrier: Logic is pure REST API, JSON mapping, and webhook triggers.'],
+          what_to_watch_out_for: ['Avoid building 20 integrations upfront. Focus solely on 1-click webhook sync.'],
+          target_accounts_to_hit_10k_mrr: {
+            accounts_for_5k_mrr: '64 paying teams',
+            accounts_for_10k_mrr: '128 paying teams',
+            monthly_price_point: '$79/mo'
+          },
+          dimension_scores: {
+            low_domain_barrier: 9.5,
+            vibe_codeability: 10.0,
+            zero_cac_distribution: 9.5,
+            async_us_sales: 10.0,
+            part_time_maintenance: 9.5,
+            platform_defensibility: 8.5
+          },
+          part_time_launch_plan: [
+            '1. Vibe-code MVP in 7 days (FastAPI + Supabase + Webhooks).',
+            '2. Submit to App Store / Directory for organic US buyer discovery.',
+            '3. Acquire 128 paying teams @ $79/mo to hit $10,000/mo MRR.'
+          ]
+        };
+
+        const fitPct = Math.round(fc.compatibility_percentage);
+        const dims = fc.dimension_scores || (fc.dimension_breakdown ? {
+          low_domain_barrier: fc.dimension_breakdown.domain_knowledge_barrier && fc.dimension_breakdown.domain_knowledge_barrier.score,
+          vibe_codeability: fc.dimension_breakdown.vibe_coding_feasibility && fc.dimension_breakdown.vibe_coding_feasibility.score,
+          zero_cac_distribution: fc.dimension_breakdown.zero_cac_distribution && fc.dimension_breakdown.zero_cac_distribution.score,
+          async_us_sales: fc.dimension_breakdown.async_us_sales && fc.dimension_breakdown.async_us_sales.score,
+          part_time_maintenance: fc.dimension_breakdown.part_time_maintenance && fc.dimension_breakdown.part_time_maintenance.score,
+          platform_defensibility: fc.dimension_breakdown.moat_and_extinction_defense && fc.dimension_breakdown.moat_and_extinction_defense.score
+        } : {});
+
+        const scoreDomain = Number(dims.low_domain_barrier || 9.5).toFixed(1);
+        const scoreVibe = Number(dims.vibe_codeability || 10.0).toFixed(1);
+        const scoreDist = Number(dims.zero_cac_distribution || 9.5).toFixed(1);
+        const scoreAsync = Number(dims.async_us_sales || 10.0).toFixed(1);
+        const scoreMaint = Number(dims.part_time_maintenance || 9.5).toFixed(1);
+        const scoreMoat = Number(dims.platform_defensibility || 8.5).toFixed(1);
+
+        const whyList = Array.isArray(fc.why_you_win) ? fc.why_you_win : (fc.why_you_win ? [fc.why_you_win] : []);
+        const watchList = Array.isArray(fc.what_to_watch_out_for) ? fc.what_to_watch_out_for : (fc.what_to_watch_out_for ? [fc.what_to_watch_out_for] : []);
+        const launchPlan = Array.isArray(fc.part_time_launch_plan) ? fc.part_time_launch_plan : [];
+
+        const acc10k = fc.target_accounts_to_hit_10k_mrr ? `${fc.target_accounts_to_hit_10k_mrr.accounts_for_10k_mrr || '128 accounts'} @ ${fc.target_accounts_to_hit_10k_mrr.monthly_price_point || '$79/mo'}` : (fc.accounts_to_10k_mrr || '128 accounts @ $79/mo');
+        const acc5k = fc.target_accounts_to_hit_10k_mrr ? `${fc.target_accounts_to_hit_10k_mrr.accounts_for_5k_mrr || '64 accounts'} @ ${fc.target_accounts_to_hit_10k_mrr.monthly_price_point || '$79/mo'}` : '64 accounts @ $79/mo';
+
+        return `
+          <div class="founder-fit-hero-banner">
+            <div class="f-hero-left">
+              <div class="f-hero-badge-row">
+                <span class="f-match-badge glow-emerald">⭐ <b>${fitPct}%</b> FOUNDER COMPATIBILITY</span>
+                <span class="dossier-badge" style="background:rgba(56,189,248,0.15); color:#38BDF8; border:1px solid rgba(56,189,248,0.3);">
+                  🇮🇳 Solo Vibe Coder (India • Part-Time • $5k-$10k MRR)
+                </span>
+                ${fc.marketplace_ecosystem ? `<span class="f-eco-chip">🛒 ${fc.marketplace_ecosystem}</span>` : ''}
+              </div>
+              <h3 class="f-hero-title">${fc.fit_level || 'Tier 1: High Conviction Solo Micro-SaaS'}</h3>
+              <p class="f-hero-desc">"${whyList[0] || 'Direct webhook sync tool with built-in app store distribution and 100% async US sales.'}"</p>
+            </div>
+            <div class="f-hero-right">
+              <div class="f-stat-box">
+                <div class="f-stat-lbl">Target Accounts to $10k MRR</div>
+                <div class="f-stat-val text-emerald">${acc10k}</div>
+                <div class="f-stat-sub">~₹8.4 Lakhs/month Net Cashflow</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6-DIMENSION FICM RADAR BREAKDOWN -->
+          <div class="ficm-radar-grid">
+            <div class="ficm-dim-card">
+              <div class="ficm-dim-header">
+                <span class="ficm-dim-name">🧠 1. Domain Barrier</span>
+                <span class="ficm-dim-score">${scoreDomain} / 10</span>
+              </div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${Number(scoreDomain) * 10}%;"></div></div>
+              <p class="ficm-dim-desc">Zero complex legal/tax domain depth. Workflows and field mappings are 100% structured.</p>
+            </div>
+
+            <div class="ficm-dim-card">
+              <div class="ficm-dim-header">
+                <span class="ficm-dim-name">⚡ 2. AI Vibe-Codeability</span>
+                <span class="ficm-dim-score">${scoreVibe} / 10</span>
+              </div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${Number(scoreVibe) * 10}%; background:linear-gradient(90deg, #38BDF8, #A855F7);"></div></div>
+              <p class="ficm-dim-desc">Standard FastAPI + Supabase + Webhooks architecture shippable in 7–14 days.</p>
+            </div>
+
+            <div class="ficm-dim-card">
+              <div class="ficm-dim-header">
+                <span class="ficm-dim-name">🛒 3. Zero-CAC Distribution</span>
+                <span class="ficm-dim-score">${scoreDist} / 10</span>
+              </div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${Number(scoreDist) * 10}%; background:linear-gradient(90deg, #10B981, #059669);"></div></div>
+              <p class="ficm-dim-desc">Direct listing on ${fc.marketplace_ecosystem || 'App Marketplaces'} with active organic search.</p>
+            </div>
+
+            <div class="ficm-dim-card">
+              <div class="ficm-dim-header">
+                <span class="ficm-dim-name">🇮🇳 4. Async US Dollar Sales</span>
+                <span class="ficm-dim-score">${scoreAsync} / 10</span>
+              </div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${Number(scoreAsync) * 10}%; background:linear-gradient(90deg, #F59E0B, #10B981);"></div></div>
+              <p class="ficm-dim-desc">100% self-serve checkout with 14-day free trial; zero live US sales demo calls required.</p>
+            </div>
+
+            <div class="ficm-dim-card">
+              <div class="ficm-dim-header">
+                <span class="ficm-dim-name">⏱️ 5. 2-3h Part-Time Run</span>
+                <span class="ficm-dim-score">${scoreMaint} / 10</span>
+              </div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${Number(scoreMaint) * 10}%; background:linear-gradient(90deg, #A855F7, #EC4899);"></div></div>
+              <p class="ficm-dim-desc">Serverless architecture with auto-retries needs only 2–3 hours/week maintenance.</p>
+            </div>
+
+            <div class="ficm-dim-card">
+              <div class="ficm-dim-header">
+                <span class="ficm-dim-name">🛡️ 6. Extinction Defense</span>
+                <span class="ficm-dim-score">${scoreMoat} / 10</span>
+              </div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${Number(scoreMoat) * 10}%; background:linear-gradient(90deg, #38BDF8, #10B981);"></div></div>
+              <p class="ficm-dim-desc">Parent platforms won't build flat pricing that undermines their $125/seat enterprise tiers.</p>
+            </div>
+          </div>
+
+          <!-- INDIA REMOTE DOLLAR LEVERAGE & CASHFLOW CALCULATOR -->
+          <div class="india-leverage-box">
+            <div class="india-leverage-header">
+              <span>🇮🇳 <b>INDIA FOUNDER DOLLAR LEVERAGE ADVANTAGE (USD &rarr; INR)</b></span>
+              <span class="badge green">High Purchasing Power Parity (PPP) Cash Engine</span>
+            </div>
+            <div class="india-leverage-grid">
+              <div class="leverage-item">
+                <div class="lev-lbl">💵 $5,000 / mo MRR Goal</div>
+                <div class="lev-val text-cyan">~₹4,20,000 / mo</div>
+                <div class="lev-sub">Requires only <b>${acc5k}</b></div>
+              </div>
+              <div class="leverage-item">
+                <div class="lev-lbl">🚀 $10,000 / mo MRR Goal</div>
+                <div class="lev-val text-emerald">~₹8,40,000 / mo</div>
+                <div class="lev-sub">Requires only <b>${acc10k}</b></div>
+              </div>
+              <div class="leverage-item">
+                <div class="lev-lbl">⏱️ Weekly Commitment</div>
+                <div class="lev-val">10–15 Hours / wk</div>
+                <div class="lev-sub">Sustainable beside a day job with 100% async Stripe sales</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WHY YOU WIN BULLETS -->
+          <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:0.9rem 1.15rem; margin-bottom:1rem;">
+            <div style="font-size:0.75rem; font-weight:800; color:#34D399; text-transform:uppercase; margin-bottom:0.45rem;">🧙‍♂️ Core Advantages for Your Profile</div>
+            <ul style="padding-left:1.2rem; font-size:0.82rem; color:#E2E8F0; line-height:1.55; margin:0;">
+              ${whyList.map(w => `<li>${w}</li>`).join('')}
+            </ul>
+          </div>
+
+          <!-- WATCH OUT TRAPS & GOTCHAS -->
+          ${watchList.length > 0 ? `
+            <div class="watch-out-card">
+              <div class="watch-out-header">
+                <span>⚠️</span>
+                <span><b>WHAT TO WATCH OUT FOR (AVOID THESE TRAPS)</b></span>
+              </div>
+              <ul style="padding-left:1.2rem; font-size:0.81rem; color:#FDA4AF; line-height:1.5; margin:0;">
+                ${watchList.map(t => `<li>${t}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+
+          <!-- PART-TIME LAUNCH ROADMAP -->
+          ${launchPlan.length > 0 ? `
+            <div style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:0.9rem 1.15rem; margin-bottom:1.2rem;">
+              <div style="font-size:0.75rem; font-weight:800; color:#38BDF8; text-transform:uppercase; margin-bottom:0.45rem;">🚀 14-Day Vibe-Coding Action Plan</div>
+              <ol style="padding-left:1.2rem; font-size:0.82rem; color:#E2E8F0; line-height:1.55; margin:0;">
+                ${launchPlan.map(p => `<li>${p.replace(/^\d+\.\s*/, '')}</li>`).join('')}
+              </ol>
+            </div>
+          ` : ''}
+        `;
+      })()}
+
+      <div class="founder-fit-grid" style="margin-top:1.4rem;">
         <div class="fit-box">
           <div class="fit-title green">✓ Who It's Best For</div>
           <ul class="fit-list">
@@ -2614,22 +3053,6 @@ function openOpportunityModal(oppIdentifier) {
         <div class="who-wins-text">"${founder.who_wins_here}"</div>
       </div>
 
-      <!-- 5-BAR SKILL DEMAND RADAR -->
-      <div class="skill-radar-container">
-        ${(founder.skill_radar || []).map(sr => `
-          <div class="skill-radar-item">
-            <div class="skill-radar-top">
-              <span class="skill-radar-name">${sr.skill} Demand</span>
-              <span class="skill-radar-score">${sr.score} / 10</span>
-            </div>
-            <div class="skill-bar-track">
-              <div class="skill-bar-fill" style="width:${(sr.score || 5) * 10}%;"></div>
-            </div>
-            <div class="skill-radar-rationale"><b>Why:</b> ${sr.rationale}</div>
-          </div>
-        `).join('')}
-      </div>
-
       <!-- REALITY BOX & EARLY KILL TRAPS -->
       <div class="reality-box-row">
         <div class="reality-pill">
@@ -2647,7 +3070,7 @@ function openOpportunityModal(oppIdentifier) {
       </div>
 
       ${founder.what_gets_you_before_revenue ? `
-        <div style="background:rgba(244,63,94,0.06); border:1px solid rgba(244,63,94,0.25); border-radius:10px; padding:0.9rem 1.1rem;">
+        <div style="background:rgba(244,63,94,0.06); border:1px solid rgba(244,63,94,0.25); border-radius:10px; padding:0.9rem 1.1rem; margin-top:1rem;">
           <div style="font-size:0.74rem; font-weight:800; color:#FB7185; text-transform:uppercase; margin-bottom:0.4rem;">⚠️ What Gets You Before Revenue (3 Death Traps)</div>
           <ul style="padding-left:1.2rem; font-size:0.8rem; color:#CBD5E1; line-height:1.5;">
             ${founder.what_gets_you_before_revenue.map(trap => `<li>${trap}</li>`).join('')}

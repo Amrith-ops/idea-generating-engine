@@ -11,10 +11,11 @@
 
 The **Ideas Brain Discovery Pipeline** currently automates:
 1. **Taxonomy & Sector Ingestion** (1,887 pure software categories across 33 macro sectors).
-2. **Negative Review Harvesting** (1★ to 3★ complaints from G2/Capterra/Reddit with idempotency hash indexing).
+2. **Automated Negative Review Harvesting & Ingestion** (Harvests 1★ to 3★ real customer complaints from G2/Capterra/Reddit for discovered products whenever reviews are sparse, persists them into PostgreSQL `g2_reviews`, and streams live review counts and verbatim citations).
 3. **Autonomous 5-Agent AI Loop & Math Matrix** (Semantic normalizer, category weight strategist, deterministic distance math, cluster formulator, red-team review auditor, venture architect).
 4. **IdeaBrowser-Grade 10-Module Venture Dossiers** (16-key JSONB payloads, ground-truth workplace scenes, 4 interactive quadrants, adversarial verdicts, founder skill radars, value ladders, napkin money math).
 5. **Live Google SEO Demand Validation** (Autocomplete stream, 12-month Google Trends trajectory, n-gram corpus mining, commercial CPC intent).
+6. **Founder-Idea Compatibility Matrix (FICM)**: Dynamic 6-dimension scoring and 1-click filtering tailored to solo vibe coders (software engineer with zero domain depth, working 2–3 hours/day from India targeting $5k–$10k MRR via App Store distribution).
 
 To achieve **$\ge 90\%$ deterministic confidence** and bridge the gap between **"Validated Idea Dossier"** and **"First $10,000 MRR"**, the following epics are scheduled in this backlog.
 
