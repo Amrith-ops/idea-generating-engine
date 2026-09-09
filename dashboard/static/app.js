@@ -166,7 +166,7 @@ function onHarvesterRootChange(rootSlug) {
     activeCategorySlug = rootSlug;
   } else {
     subSelect.innerHTML = root.subcategories.map(s => `
-      <option value="${s.slug}">${s.name} ${s.opportunity_count > 0 ? `(🟢 ${s.opportunity_count} Ideas)` : ''}</option>
+      <option value="${s.slug}">${s.name} ${s.opportunity_count > 0 ? `(🟢 ${s.opportunity_count} Ideas • 🛡️ ${s.review_count || 0} Revs)` : (s.review_count > 0 ? `(🛡️ ${s.review_count} Revs)` : '')}</option>
     `).join('');
     
     const matched = root.subcategories.find(s => s.slug === activeCategorySlug);
@@ -214,7 +214,7 @@ function syncCategorySelectors(rootSlug, subSlug) {
     const root = categoryHierarchy.find(r => r.slug === rootSlug);
     if (root && root.subcategories) {
       subSelect.innerHTML = root.subcategories.map(s => `
-        <option value="${s.slug}">${s.name} ${s.opportunity_count > 0 ? `(🟢 ${s.opportunity_count} Ideas)` : ''}</option>
+        <option value="${s.slug}">${s.name} ${s.opportunity_count > 0 ? `(🟢 ${s.opportunity_count} Ideas • 🛡️ ${s.review_count || 0} Revs)` : (s.review_count > 0 ? `(🛡️ ${s.review_count} Revs)` : '')}</option>
       `).join('');
       subSelect.value = subSlug;
     }
@@ -254,7 +254,7 @@ async function loadCategoryDatalist() {
 /* ==========================================================================
    3. UNIFIED 3-PHASE PIPELINE & 5-AGENT DISCOVERY TRIGGER
    ========================================================================== */
-async function triggerMine() {
+async function triggerMine(forceRefresh = true) {
   const catSlug = activeCategorySlug || 'help-desk';
   const catName = catSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   
@@ -290,7 +290,7 @@ async function triggerMine() {
     const response = await fetch('/api/cluster-and-mine-stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category_slug: catSlug })
+      body: JSON.stringify({ category_slug: catSlug, force_refresh: forceRefresh })
     });
 
     if (!response.ok) {
@@ -550,7 +550,7 @@ function renderHierarchyDirectory(hierarchyList) {
               <div class="scanned-cat-stats-row">
                 <span class="scanned-stat-tag emerald">🟢 ${s.opportunity_count || 0} White Spaces</span>
                 <span class="scanned-stat-tag cyan">📦 ${s.product_count || 0} Competitors</span>
-                <span class="scanned-stat-tag purple">🛡️ Live Reviews</span>
+                <span class="scanned-stat-tag purple">🛡️ ${s.review_count || 0} Reviews</span>
               </div>
 
               <div class="scanned-cat-actions">
@@ -608,7 +608,7 @@ function renderHierarchyDirectory(hierarchyList) {
 
   container.innerHTML = filteredRoots.map(r => {
     const isExpanded = r.forceExpand;
-    const hasScanned = (r.total_opportunity_count > 0 || r.total_product_count > 0);
+    const hasScanned = (r.total_opportunity_count > 0 || r.total_product_count > 0 || r.total_review_count > 0);
     const icon = SECTOR_ICONS[r.slug] || '📁';
     const subList = r.displaySubs || [];
 
@@ -625,6 +625,11 @@ function renderHierarchyDirectory(hierarchyList) {
                 🟢 ${r.total_opportunity_count} White Spaces
               </span>
             ` : ''}
+            ${r.total_review_count > 0 ? `
+              <span class="hierarchy-sub-badge scanned" style="background:rgba(168,85,247,0.15); padding:0.2rem 0.6rem; border-radius:6px; border:1px solid rgba(168,85,247,0.3); color:#D8B4FE;">
+                🛡️ ${r.total_review_count} Reviews
+              </span>
+            ` : ''}
             <span>${subList.length} Sub-Categories</span>
             <span class="hierarchy-root-chevron">▼</span>
           </div>
@@ -632,7 +637,7 @@ function renderHierarchyDirectory(hierarchyList) {
 
         <div class="hierarchy-sub-grid">
           ${subList.map(s => {
-            const isScanned = (s.opportunity_count > 0 || s.product_count > 0);
+            const isScanned = (s.opportunity_count > 0 || s.product_count > 0 || s.review_count > 0);
             const isCurrentActive = (s.slug === activeCategorySlug);
 
             return `
@@ -641,9 +646,9 @@ function renderHierarchyDirectory(hierarchyList) {
                   <span class="hierarchy-sub-name" title="${s.name}">${s.name}</span>
                   <span class="hierarchy-sub-badge ${isScanned ? 'scanned' : ''}">
                     ${s.opportunity_count > 0 
-                      ? `🟢 ${s.opportunity_count} White Spaces • ${s.product_count || 0} Competitors` 
+                      ? `🟢 ${s.opportunity_count} White Spaces • 📦 ${s.product_count || 0} Competitors • 🛡️ ${s.review_count || 0} Reviews` 
                       : s.product_count > 0 
-                        ? `📦 ${s.product_count} Products Profiled` 
+                        ? `📦 ${s.product_count} Products Profiled • 🛡️ ${s.review_count || 0} Reviews` 
                         : `⚪ Ready for 5-Agent Discovery`}
                   </span>
                 </div>
@@ -703,7 +708,7 @@ function openAgentProgressModal(title, targetName, subtitle, domainName) {
   }
   if (activeAgentEl) activeAgentEl.innerText = 'Initializing';
   if (roleEl) roleEl.innerText = 'Phase 1: Discovery';
-  if (prodsEl) prodsEl.innerText = '-- / --';
+  if (prodsEl) prodsEl.innerText = '0 Prods • 0 Revs';
 
   // Reset phase pills
   updatePipelinePhase(1, 'Taxonomy & Market Discovery');

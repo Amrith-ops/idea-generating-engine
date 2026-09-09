@@ -1,5 +1,6 @@
 import re
 import json
+import time
 import logging
 import urllib.parse
 import urllib.request
@@ -33,7 +34,8 @@ class AgenticClusteringOrchestrator:
     def execute_agentic_clustering_and_whitespace(
         self,
         category_slug: str,
-        progress_callback: Optional[Any] = None
+        progress_callback: Optional[Any] = None,
+        force_refresh: bool = False
     ) -> Dict[str, Any]:
         """
         Executes the complete end-to-end 3-Phase Pipeline:
@@ -104,13 +106,13 @@ class AgenticClusteringOrchestrator:
 
         # Step 2: Competitor Landscape Discovery
         products = self.db.fetch_all("SELECT * FROM g2_products WHERE category_slug = %s", (category_slug,))
-        if not products or len(products) < 4:
+        if not products or len(products) < 6 or force_refresh:
             from pipeline.competitor_clustering_engine import CompetitorClusterEngine
             cluster_engine = CompetitorClusterEngine(db=self.db)
-            products = cluster_engine.discover_exhaustive_products(category_slug, category_name, target_count=8)
+            products = cluster_engine.discover_exhaustive_products(category_slug, category_name, target_count=10)
 
         if not total_products_count or total_products_count < len(products):
-            total_products_count = max(len(products), 8)
+            total_products_count = max(len(products), 10)
 
         prod_names = [p["name"] for p in products]
         emit_progress(
@@ -120,8 +122,8 @@ class AgenticClusteringOrchestrator:
             step_name="Competitor Discovery & Orbit Classification",
             progress_pct=20,
             active_agent="Market Indexer",
-            status_message=f"Discovered {len(products)} competitor products in '{category_name}'.",
-            log_entry=f"Identified Orbit 0 Behemoths and Orbit 1 Challengers: {', '.join(prod_names[:5])}{'...' if len(prod_names) > 5 else ''}."
+            status_message=f"Discovered {len(products)} competitor products across Orbit 0, 1 & 2 in '{category_name}'.",
+            log_entry=f"Identified Orbit 0 Behemoths and Orbit 1 Challengers: {', '.join(prod_names[:6])}{'...' if len(prod_names) > 6 else ''}."
         )
 
         # =========================================================================
@@ -134,9 +136,9 @@ class AgenticClusteringOrchestrator:
             WHERE p.category_slug = %s
         """, (category_slug,))
 
-        # If reviews are sparse or not yet harvested for this category / products, trigger automated live harvesting
-        min_required_reviews = max(len(products) * 2, 8)
-        if len(reviews) < min_required_reviews:
+        # If force_refresh or reviews are sparse, trigger live harvesting
+        min_required_reviews = max(len(products) * 2, 10)
+        if len(reviews) < min_required_reviews or force_refresh:
             from pipeline.live_review_harvester import LiveReviewHarvester
             harvester = LiveReviewHarvester(db=self.db)
 
@@ -144,10 +146,10 @@ class AgenticClusteringOrchestrator:
                 prod_name = p.get("name", "")
                 prod_slug = p.get("slug") or re.sub(r'[^a-zA-Z0-9]+', '-', prod_name.lower()).strip('-')
 
-                # Check if product already has reviews
-                existing_p_revs = [r for r in reviews if r.get("product_slug") == prod_slug]
-                if len(existing_p_revs) >= 2:
-                    continue
+                if not force_refresh:
+                    existing_p_revs = [r for r in reviews if r.get("product_slug") == prod_slug]
+                    if len(existing_p_revs) >= 2:
+                        continue
 
                 sub_pct = 22 + int((idx / max(len(products), 1)) * 14)
                 emit_progress(
@@ -183,6 +185,8 @@ class AgenticClusteringOrchestrator:
                         )
                 except Exception as h_err:
                     self.logger.warning(f"Error harvesting reviews for product '{prod_name}': {h_err}")
+
+                time.sleep(0.2)
 
             # Re-fetch all reviews from database to ensure complete and consistent state
             reviews = self.db.fetch_all("""

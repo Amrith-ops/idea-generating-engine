@@ -35,6 +35,7 @@ class MineRequest(BaseModel):
     category_slug: str
     mode: str = "subcategory"  # "root_sector" or "subcategory"
     max_subcategories: int = 3
+    force_refresh: bool = True
 
 @app.get("/api/stats")
 def get_stats():
@@ -117,15 +118,17 @@ def get_categories(query: Optional[str] = None, limit: int = 100):
 def get_category_hierarchy():
     """
     Returns the complete hierarchy of Root Sectors (Customer Service, Sales Tools, ERP, Marketing, etc.)
-    along with their nested Sub-Categories and count of mined opportunities.
+    along with their nested Sub-Categories and count of mined opportunities and verified reviews.
     """
     roots = db.fetch_all("""
         SELECT c.slug, c.name, c.description,
                COUNT(DISTINCT p.id) as product_count,
-               COUNT(DISTINCT o.id) as opportunity_count
+               COUNT(DISTINCT o.id) as opportunity_count,
+               COUNT(DISTINCT r.id) as review_count
         FROM g2_categories c
         LEFT JOIN g2_products p ON p.category_slug = c.slug
         LEFT JOIN microsaas_opportunities o ON o.category_slug = c.slug
+        LEFT JOIN g2_reviews r ON r.product_slug = p.slug
         WHERE c.parent_slug IS NULL
         GROUP BY c.slug, c.name, c.description
         ORDER BY c.name ASC
@@ -134,13 +137,15 @@ def get_category_hierarchy():
     all_subs = db.fetch_all("""
         SELECT c.slug, c.name, c.parent_slug, c.description,
                COUNT(DISTINCT p.id) as product_count,
-               COUNT(DISTINCT o.id) as opportunity_count
+               COUNT(DISTINCT o.id) as opportunity_count,
+               COUNT(DISTINCT r.id) as review_count
         FROM g2_categories c
         LEFT JOIN g2_products p ON p.category_slug = c.slug
         LEFT JOIN microsaas_opportunities o ON o.category_slug = c.slug
+        LEFT JOIN g2_reviews r ON r.product_slug = p.slug
         WHERE c.parent_slug IS NOT NULL
         GROUP BY c.slug, c.name, c.parent_slug, c.description
-        ORDER BY opportunity_count DESC, c.name ASC
+        ORDER BY opportunity_count DESC, review_count DESC, c.name ASC
     """)
     
     sub_map = {}
@@ -155,9 +160,10 @@ def get_category_hierarchy():
         r["subcategory_count"] = len(r["subcategories"])
         r["total_opportunity_count"] = r["opportunity_count"] + sum(s["opportunity_count"] for s in r["subcategories"])
         r["total_product_count"] = r["product_count"] + sum(s["product_count"] for s in r["subcategories"])
+        r["total_review_count"] = r["review_count"] + sum(s["review_count"] for s in r["subcategories"])
         
-    # Sort roots: roots with active opportunities first, then by total subcategories
-    roots.sort(key=lambda x: (x["total_opportunity_count"], x["total_product_count"], x["subcategory_count"]), reverse=True)
+    # Sort roots: roots with active opportunities and reviews first, then by total subcategories
+    roots.sort(key=lambda x: (x["total_opportunity_count"], x["total_review_count"], x["total_product_count"], x["subcategory_count"]), reverse=True)
     return roots
 
 @app.get("/api/products")
@@ -174,14 +180,16 @@ def get_active_categories():
         p_cat.name as parent_name,
         c.description,
         COUNT(DISTINCT p.id) as product_count,
-        COUNT(DISTINCT o.id) as opportunity_count
+        COUNT(DISTINCT o.id) as opportunity_count,
+        COUNT(DISTINCT r.id) as review_count
     FROM g2_categories c
     LEFT JOIN g2_categories p_cat ON p_cat.slug = c.parent_slug
     LEFT JOIN g2_products p ON p.category_slug = c.slug
     LEFT JOIN microsaas_opportunities o ON o.category_slug = c.slug
-    WHERE p.id IS NOT NULL OR o.id IS NOT NULL
+    LEFT JOIN g2_reviews r ON r.product_slug = p.slug
+    WHERE p.id IS NOT NULL OR o.id IS NOT NULL OR r.id IS NOT NULL
     GROUP BY c.slug, c.name, c.parent_slug, p_cat.name, c.description
-    ORDER BY opportunity_count DESC, product_count DESC
+    ORDER BY opportunity_count DESC, review_count DESC, product_count DESC
     """
     return db.fetch_all(sql)
 
@@ -663,7 +671,8 @@ def trigger_cluster_and_whitespace_stream(req: MineRequest):
             orchestrator = AgenticClusteringOrchestrator(db=db)
             result = orchestrator.execute_agentic_clustering_and_whitespace(
                 category_slug=req.category_slug,
-                progress_callback=progress_callback
+                progress_callback=progress_callback,
+                force_refresh=req.force_refresh
             )
             event_queue.put({"type": "complete", "result": result})
         except Exception as e:

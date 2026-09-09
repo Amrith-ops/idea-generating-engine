@@ -49,6 +49,18 @@ class DatabaseClient:
             conn.commit()
 
     def insert_product(self, product_data: Dict[str, Any]):
+        data = {
+            "name": product_data.get("name", "Unknown Product"),
+            "slug": product_data.get("slug", ""),
+            "category_slug": product_data.get("category_slug", ""),
+            "orbit_tier": product_data.get("orbit_tier", "1_challenger"),
+            "parent_incumbent_slug": product_data.get("parent_incumbent_slug", None),
+            "rating_avg": product_data.get("rating_avg", 4.2),
+            "review_count": product_data.get("review_count", 1000),
+            "pricing_model": product_data.get("pricing_model", "per_seat"),
+            "market_segment": product_data.get("market_segment", "Small Business"),
+            "primary_vulnerability": product_data.get("primary_vulnerability", "Steep seat fees and legacy complexity"),
+        }
         sql = """
         INSERT INTO g2_products (
             name, slug, category_slug, orbit_tier, parent_incumbent_slug,
@@ -63,7 +75,7 @@ class DatabaseClient:
         """
         with self.get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(sql, product_data)
+                cur.execute(sql, data)
             conn.commit()
 
     def insert_review(self, review_data: Dict[str, Any]):
