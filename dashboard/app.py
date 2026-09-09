@@ -4,7 +4,7 @@ import logging
 from typing import Optional, List
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pathlib import Path
@@ -423,6 +423,65 @@ def trigger_live_mine(req: MineRequest):
         logging.error(f"Mining failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/mine-stream")
+def trigger_live_mine_stream(req: MineRequest):
+    """
+    Streams live NDJSON progress events from the autonomous review harvester.
+    """
+    import queue
+    import threading
+
+    event_queue = queue.Queue()
+
+    def progress_callback(event_data):
+        event_queue.put(event_data)
+
+    def run_worker():
+        try:
+            harvester = LiveReviewHarvester()
+            if req.mode == "root_sector":
+                harvested = harvester.harvest_root_sector(
+                    req.category_slug,
+                    max_subs=req.max_subcategories,
+                    progress_callback=progress_callback
+                )
+                event_queue.put({
+                    "type": "complete",
+                    "status": "success",
+                    "message": f"Successfully harvested Root Sector across {len(harvested)} subcategories!",
+                    "harvested": harvested
+                })
+            else:
+                harvester.harvest_category_and_mine(
+                    req.category_slug,
+                    progress_callback=progress_callback
+                )
+                event_queue.put({
+                    "type": "complete",
+                    "status": "success",
+                    "message": f"Successfully harvested subcategory '{req.category_slug}'!"
+                })
+        except Exception as e:
+            logging.error(f"Live Harvester streaming error: {e}")
+            event_queue.put({"type": "error", "error": str(e)})
+
+    thread = threading.Thread(target=run_worker)
+    thread.daemon = True
+    thread.start()
+
+    def event_stream():
+        while True:
+            try:
+                event = event_queue.get(timeout=180)
+                yield json.dumps(event, default=str) + "\n"
+                if event.get("type") in ("complete", "error") or event.get("progress_pct") == 100:
+                    break
+            except Exception as stream_err:
+                yield json.dumps({"type": "error", "error": str(stream_err)}) + "\n"
+                break
+
+    return StreamingResponse(event_stream(), media_type="application/x-ndjson")
+
 @app.get("/api/keywords")
 def get_keywords(category_slug: Optional[str] = None):
     if category_slug:
@@ -448,6 +507,129 @@ def get_keywords(category_slug: Optional[str] = None):
         "highest_volume": highest_volume,
         "most_relevant": most_relevant
     }
+
+@app.get("/api/clusters")
+def get_competitor_clusters(category_slug: Optional[str] = None):
+    """
+    Returns strategic competitor clusters with their member products,
+    feature profiles, common pain points, and unaddressed gaps.
+    """
+    clusters = db.get_competitor_clusters(category_slug)
+    # If no clusters exist yet for this category, auto-generate them
+    if not clusters and category_slug:
+        from pipeline.competitor_clustering_engine import CompetitorClusterEngine
+        c_engine = CompetitorClusterEngine(db=db)
+        c_engine.cluster_products(category_slug)
+        clusters = db.get_competitor_clusters(category_slug)
+
+    # Enrich each cluster with product objects
+    for cl in clusters:
+        prod_slugs = cl.get("product_slugs") or []
+        if prod_slugs:
+            sql = "SELECT * FROM g2_products WHERE slug = ANY(%s)"
+            cl["products"] = db.fetch_all(sql, (prod_slugs,))
+            for p in cl["products"]:
+                if isinstance(p.get("features"), str):
+                    try:
+                        p["features"] = json.loads(p["features"])
+                    except Exception:
+                        p["features"] = []
+        else:
+            cl["products"] = []
+
+    return clusters
+
+@app.get("/api/whitespace")
+def get_whitespace_opportunities(category_slug: Optional[str] = None):
+    """
+    Returns high-conviction white space Micro-SaaS opportunities
+    synthesized from cross-cluster pain omissions and validated with Google SEO demand.
+    """
+    opps = db.get_whitespace_opportunities(category_slug)
+    if not opps and category_slug:
+        from pipeline.whitespace_omission_analyzer import WhitespaceOmissionAnalyzer
+        w_engine = WhitespaceOmissionAnalyzer(db=db)
+        res = w_engine.analyze_category_whitespace(category_slug)
+        opps = res.get("whitespace_opportunities", [])
+
+    return opps
+
+@app.get("/api/cluster-pain-graph")
+def get_cluster_pain_graph(category_slug: Optional[str] = None):
+    """
+    Returns an interactive node-link graph model showing:
+    - Competitor Archetype Clusters
+    - Shared Cross-Cluster Pain Points (Bridges)
+    - Cluster-Isolated Pain Points
+    - 100% Unresolved Systemic Blind Spots (White Space Omissions with 0 cluster solutions)
+    - Micro-SaaS Unbundling Solutions
+    """
+    cat_slug = category_slug or "help-desk"
+    from pipeline.pain_graph_builder import PainGraphBuilder
+    builder = PainGraphBuilder(db=db)
+    return builder.generate_category_pain_graph(cat_slug)
+
+
+@app.post("/api/cluster-and-mine")
+def trigger_cluster_and_whitespace_mine(req: MineRequest):
+    """
+    Triggers end-to-end multi-signal clustering and white space generation using AgenticClusteringOrchestrator.
+    """
+    try:
+        from pipeline.agents.orchestrator import AgenticClusteringOrchestrator
+        orchestrator = AgenticClusteringOrchestrator(db=db)
+        result = orchestrator.execute_agentic_clustering_and_whitespace(req.category_slug)
+        return {
+            "status": "success",
+            "message": f"Successfully executed Agentic Clustering and synthesized {len(result.get('whitespace_opportunities', []))} white space opportunities for '{req.category_slug}'!",
+            "data": result
+        }
+    except Exception as e:
+        logging.error(f"Agentic clustering & whitespace analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/cluster-and-mine-stream")
+def trigger_cluster_and_whitespace_stream(req: MineRequest):
+    """
+    Streams live NDJSON progress events from the 5-Agent Collaborative AI loop.
+    """
+    import queue
+    import threading
+
+    event_queue = queue.Queue()
+
+    def progress_callback(event_data):
+        event_queue.put(event_data)
+
+    def run_worker():
+        try:
+            from pipeline.agents.orchestrator import AgenticClusteringOrchestrator
+            orchestrator = AgenticClusteringOrchestrator(db=db)
+            result = orchestrator.execute_agentic_clustering_and_whitespace(
+                category_slug=req.category_slug,
+                progress_callback=progress_callback
+            )
+            event_queue.put({"type": "complete", "result": result})
+        except Exception as e:
+            logging.error(f"Agentic loop streaming error: {e}")
+            event_queue.put({"type": "error", "error": str(e)})
+
+    thread = threading.Thread(target=run_worker)
+    thread.daemon = True
+    thread.start()
+
+    def event_stream():
+        while True:
+            try:
+                event = event_queue.get(timeout=180)
+                yield json.dumps(event, default=str) + "\n"
+                if event.get("type") in ("complete", "error") or event.get("progress_pct") == 100:
+                    break
+            except Exception as stream_err:
+                yield json.dumps({"type": "error", "error": str(stream_err)}) + "\n"
+                break
+
+    return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
 @app.get("/api/evidence")
 def get_review_evidence(category_slug: Optional[str] = None, product_slug: Optional[str] = None, limit: int = 50):

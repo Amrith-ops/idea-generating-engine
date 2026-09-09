@@ -51,311 +51,323 @@
       </div>
     </section>
 
-    <!-- HIERARCHICAL AI HARVESTER & MINER -->
-    <section class="miner-section">
-      <div class="miner-card">
-        <div class="miner-header-row">
-          <div class="miner-left">
-            <h3>⚡ Live Autonomous Review Harvester</h3>
-            <p>Crawl live competitor negative reviews, mine unbundling vectors with Gemini AI, and discover live Google search demand.</p>
-          </div>
-          <!-- HARVESTER MODE SELECTOR -->
-          <div class="harvester-mode-toggle">
-            <button class="mode-btn active" id="btn-mode-sub" onclick="setHarvesterMode('subcategory')">
-              🎯 1. Specific Sub-Category
-            </button>
-            <button class="mode-btn" id="btn-mode-root" onclick="setHarvesterMode('root_sector')">
-              🌳 2. Root Sector Batch Scan
-            </button>
-          </div>
-        </div>
-
-        <div class="miner-controls-grid">
+    <!-- UNIFIED GLOBAL SUBCATEGORY COMMAND BAR -->
+    <section class="global-command-section">
+      <div class="command-bar-card">
+        <div class="command-bar-grid">
           <!-- ROOT SECTOR SELECT -->
           <div class="control-group">
-            <label class="control-label">Root Sector (Macro Domain)</label>
+            <label class="control-label">1. Root Sector (Macro Domain)</label>
             <select id="harvester-root-select" class="custom-select" onchange="onHarvesterRootChange(this.value)">
               <option value="">Loading Root Sectors...</option>
             </select>
           </div>
 
           <!-- SUBCATEGORY SELECT -->
-          <div class="control-group" id="subcat-control-group">
-            <label class="control-label" id="subcat-label">Sub-Category</label>
+          <div class="control-group">
+            <label class="control-label">2. Target Sub-Category</label>
             <select id="harvester-sub-select" class="custom-select" onchange="onHarvesterSubChange(this.value)">
               <option value="">Select Sub-Category...</option>
             </select>
           </div>
 
-          <!-- ACTION BUTTON -->
+          <!-- QUICK SEARCH / DIRECTORY -->
+          <div class="control-group">
+            <label class="control-label">Quick Search or Directory</label>
+            <div class="quick-search-actions">
+              <input type="text" id="category-quick-search" class="custom-input" placeholder="Search 1,887 subcategories..." list="category-datalist" onchange="onCategorySearchSelect(this.value)">
+              <datalist id="category-datalist"></datalist>
+              <button class="btn-secondary btn-directory" onclick="openHierarchyModal()" title="Browse all 33 Root Sectors & 1,887 Subcategories">
+                📂 Directory
+              </button>
+            </div>
+          </div>
+
+          <!-- 5-AGENT RUN TRIGGER -->
           <div class="control-group button-group">
-            <label class="control-label" style="opacity:0;">Action</label>
-            <button id="btn-mine" class="btn-primary btn-block" onclick="triggerMine()">
-              <span id="btn-text">⛏️ Run AI Harvester</span>
+            <label class="control-label" style="opacity:0;">Discovery Action</label>
+            <button id="btn-mine" class="btn-primary btn-block btn-launch-discovery" onclick="triggerMine()">
+              <span id="btn-text">⚡ Run 5-Agent Discovery</span>
               <div id="btn-spinner" class="spinner hidden"></div>
             </button>
           </div>
         </div>
 
-        <div id="miner-status" class="miner-status hidden"></div>
+        <!-- 1-SENTENCE USAGE INSTRUCTION -->
+        <div class="command-bar-hint">
+          <span class="hint-icon">💡</span>
+          <span><b>How to use:</b> Select any already-scanned subcategory (marked <b style="color:var(--emerald-glow);">🟢</b>) to instantly view its Competitor Clusters & White Space Matrix, or pick any category & click <b>⚡ Run 5-Agent Discovery</b> to harvest live reviews and mine new unbundling wedges.</span>
+        </div>
       </div>
     </section>
 
-    <!-- VIEW SWITCHER NAVIGATION TABS -->
+    <!-- 5-PILLAR DECISION NAVIGATION TABS -->
     <nav class="view-nav-bar">
       <div class="view-tabs">
-        <button class="view-tab-btn active" id="tab-btn-orbit" onclick="switchMainView('orbit')">
-          <span class="tab-icon">🪐</span>
-          <span class="tab-label">Orbital Universe View</span>
-          <span class="tab-badge">Interactive</span>
+        <button class="view-tab-btn active" id="tab-btn-whitespace" onclick="switchMainView('whitespace')">
+          <span class="tab-icon">🎯</span>
+          <span class="tab-label">Micro-SaaS Idea Opportunities</span>
+          <span class="tab-badge purple" id="whitespace-count-badge">White Space Matrix</span>
         </button>
-        <button class="view-tab-btn" id="tab-btn-grid" onclick="switchMainView('grid')">
-          <span class="tab-icon">🚀</span>
-          <span class="tab-label">Opportunity Grid</span>
-          <span class="tab-badge" id="grid-count-badge">18 Ideas</span>
+        <button class="view-tab-btn" id="tab-btn-clusters" onclick="switchMainView('clusters')">
+          <span class="tab-icon">🔮</span>
+          <span class="tab-label">Competitor Landscape</span>
+          <span class="tab-badge cyan" id="cluster-count-badge">Existing Big Players</span>
+        </button>
+        <button class="view-tab-btn" id="tab-btn-paingraph" onclick="switchMainView('paingraph')">
+          <span class="tab-icon">🕸️</span>
+          <span class="tab-label">Pain Network & Blind Spots</span>
+          <span class="tab-badge rose" id="paingraph-count-badge">Systemic Graph</span>
         </button>
         <button class="view-tab-btn" id="tab-btn-keywords" onclick="switchMainView('keywords')">
           <span class="tab-icon">📊</span>
-          <span class="tab-label">Search Volume & Keyword Demand</span>
-          <span class="tab-badge" style="background:rgba(16,185,129,0.2); color:var(--emerald-glow); border-color:rgba(16,185,129,0.4);">Demand Verified</span>
+          <span class="tab-label">Search Demand & Keywords</span>
+          <span class="tab-badge emerald">Google Grounded</span>
+        </button>
+        <button class="view-tab-btn" id="tab-btn-strategy" onclick="switchMainView('strategy')">
+          <span class="tab-icon">🛡️</span>
+          <span class="tab-label">Agent Strategy & Audit</span>
+          <span class="tab-badge purple">Anti-Hallucination</span>
         </button>
       </div>
       <div class="view-nav-stats">
         <span class="live-dot"></span>
-        <span>Satellite Orbit Engine Active</span>
+        <span>Decision Engine Active</span>
       </div>
     </nav>
 
-    <!-- 1. ORBITAL UNIVERSE VIEW (REVOLVING SATELLITE ENGINE) -->
-    <section id="orbit-view-section" class="orbit-view-section">
-      <!-- HIERARCHICAL CATEGORY SELECTION BAR -->
-      <div class="category-selector-card">
-        <div class="category-selector-header">
-          <div class="cat-sel-title">
-            <span class="icon">🌌</span>
-            <div>
-              <h3>Macro Sector & Sub-Category Gravity System</h3>
-              <p>Select a <b>Root Sector</b> (e.g. <i>Customer Service</i>) and pick any <b>Sub-Category</b> (e.g. <i>Help Desk Software</i>) to load its Orbit 0 Goliath, Orbit 1 Challengers, and Orbit 2 Micro-SaaS Satellites.</p>
-            </div>
-          </div>
-          <div class="cat-header-actions">
-            <button class="btn-secondary" onclick="openHierarchyModal()">
-              📂 Browse All 33 Root Sectors & 1,887 Categories &rarr;
-            </button>
-            <div class="cat-quick-search">
-              <input type="text" id="orbit-category-search" placeholder="Search 1,887 categories..." list="orbit-cat-datalist" onchange="onCategorySearchSelect(this.value)">
-              <datalist id="orbit-cat-datalist"></datalist>
-            </div>
-          </div>
+    <!-- 1. MICRO-SAAS IDEA OPPORTUNITIES VIEW (PRIMARY DECISION COCKPIT) -->
+    <section id="whitespace-view-section" class="whitespace-view-section">
+      <div class="keyword-header-card" style="border-color: rgba(16,185,129,0.3); background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+        <div class="kw-header-info">
+          <h3>🎯 Validated Micro-SaaS Opportunities</h3>
+          <p>Profitable software ideas discovered by finding <b>unmet needs across existing software</b> and verified with <b>real Google buyer searches</b>.</p>
         </div>
-        
-        <!-- ROOT SECTORS BAR -->
-        <div class="root-sector-tabs-row" id="root-sector-tabs">
-          <!-- Populated by JS -->
-          <button class="root-tab active">Loading Root Sectors...</button>
-        </div>
-
-        <!-- SUBCATEGORIES PILLS ROW -->
-        <div class="subcat-pills-container">
-          <div class="subcat-header">
-            <span class="subcat-title" id="active-root-title">Sub-Categories in Customer Service:</span>
-            <span class="subcat-count" id="active-subcat-count">32 Available</span>
-          </div>
-          <div class="category-pills-row" id="active-subcat-pills">
-            <!-- Populated by JS -->
-            <button class="cat-pill active">Loading Subcategories...</button>
-          </div>
+        <div class="kw-stat-badges">
+          <button class="btn-primary" onclick="triggerClusterAndMine()" id="btn-recluster" style="background:linear-gradient(135deg, #10B981 0%, #059669 100%); color:#FFF;">
+            <span id="btn-recluster-text">⚡ Re-Mine White Spaces</span>
+            <div id="btn-recluster-spinner" class="spinner hidden" style="border-top-color:#FFF;"></div>
+          </button>
         </div>
       </div>
 
-      <!-- ORBIT COSMIC STAGE & TELEMETRY HUD -->
-      <div class="orbit-layout-container">
-        <!-- THE ORBIT STAGE -->
-        <div class="orbit-stage-wrapper">
-          <div class="orbit-stage-toolbar">
-            <div class="system-meta-badge">
-              <span class="dot-system"></span>
-              <span id="orbit-system-title">Customer Service / Help Desk Software Gravity Well</span>
-            </div>
-            <div class="orbit-controls">
-              <button class="control-btn" id="btn-toggle-spin" onclick="toggleOrbitSpin()" title="Pause/Play Rotation">
-                <span id="spin-icon">⏸️</span> Pause Orbit
-              </button>
-              <div class="speed-selector">
-                <button class="speed-btn" onclick="setOrbitSpeed(0.5)">0.5x</button>
-                <button class="speed-btn active" onclick="setOrbitSpeed(1)">1x</button>
-                <button class="speed-btn" onclick="setOrbitSpeed(2)">2x Fast</button>
-              </div>
-              <button class="control-btn" id="btn-toggle-lasers" onclick="toggleLasers()">
-                ⚡ Lasers: ON
-              </button>
-            </div>
-          </div>
-
-          <!-- HTML5 Canvas Orbit Simulation -->
-          <canvas id="orbit-canvas" width="850" height="600"></canvas>
-          
-          <div class="orbit-legend">
-            <div class="legend-item"><span class="legend-dot red"></span> <b>Orbit 0:</b> Goliath Incumbent (Sun)</div>
-            <div class="legend-item"><span class="legend-dot yellow"></span> <b>Orbit 1:</b> Challengers (Planets)</div>
-            <div class="legend-item"><span class="legend-dot green"></span> <b>Orbit 2:</b> Micro-SaaS Satellites (Moons)</div>
-          </div>
+      <!-- FILTER & SEARCH TOOLBAR -->
+      <div class="filter-toolbar">
+        <div class="filter-btn-group">
+          <span class="filter-label">Quick Filters:</span>
+          <button class="filter-pill active" id="ws-flt-all" onclick="filterWhitespaceOpportunities('all')">🔥 All Ideas (<span id="ws-count-all">0</span>)</button>
+          <button class="filter-pill" id="ws-flt-high-osi" onclick="filterWhitespaceOpportunities('high-osi')">⭐ Top ROI Score (9.0+)</button>
+          <button class="filter-pill" id="ws-flt-rapid" onclick="filterWhitespaceOpportunities('rapid')">⚡ Fast Build (≤14 Days)</button>
+          <button class="filter-pill" id="ws-flt-high-acv" onclick="filterWhitespaceOpportunities('high-acv')">💰 Higher Price ($49+/mo)</button>
         </div>
-
-        <!-- RIGHT TELEMETRY HUD -->
-        <div class="orbit-telemetry-panel">
-          <div class="hud-card">
-            <div class="hud-header">
-              <h4>🎯 Under-Attack Competitors</h4>
-              <span class="hud-badge" id="hud-competitor-count">3 Tracked</span>
-            </div>
-            <div id="hud-competitors-list" class="hud-list">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-
-          <div class="hud-card">
-            <div class="hud-header">
-              <h4>🔥 Top Discontent Pain Vectors</h4>
-              <span class="hud-badge red">Mined from G2</span>
-            </div>
-            <div id="hud-pain-list" class="hud-list">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-
-          <div class="hud-card highlight-card">
-            <div class="hud-header">
-              <h4>🛰️ Orbit 2 Micro-SaaS Satellites</h4>
-              <span class="hud-badge green" id="hud-satellite-count">4 Satellites</span>
-            </div>
-            <div id="hud-satellites-list" class="hud-satellites-list">
-              <!-- Populated by JS -->
-            </div>
-          </div>
+        <div class="filter-search-wrap">
+          <input type="text" id="ws-search-input" class="filter-search-input" placeholder="🔍 Filter ideas by problem, feature, or audience..." oninput="searchWhitespaceOpportunities(this.value)">
         </div>
       </div>
 
-      <!-- BOTTOM DISRUPTION & DEMAND PULSE DECK (UTILIZING BOTTOM SPACE CLEANLY) -->
-      <div class="category-bottom-pulse-deck">
-        <div class="pulse-card">
-          <div class="pulse-header">
-            <div class="pulse-title-group">
-              <span class="pulse-icon">⚡</span>
-              <div>
-                <h4>Direct Disruption Vector & Attack Mapping</h4>
-                <p>Which Orbit 2 Micro-SaaS Satellites are built to capture unhappy users from each incumbent.</p>
-              </div>
-            </div>
-            <span class="pulse-tag">Active Playbook</span>
-          </div>
-          <div id="pulse-attack-mapping" class="pulse-attack-grid">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-
-        <div class="pulse-card">
-          <div class="pulse-header">
-            <div class="pulse-title-group">
-              <span class="pulse-icon">📈</span>
-              <div>
-                <h4>Live Category Search Arbitrage & Buyer Demand</h4>
-                <p>Top real-time search queries signaling buyer churn in this category.</p>
-              </div>
-            </div>
-            <span class="pulse-tag green">High Buyer Intent</span>
-          </div>
-          <div id="pulse-keywords-preview" class="pulse-keywords-list">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 2. OPPORTUNITY GRID VIEW -->
-    <section id="grid-view-section" class="grid-view-section hidden">
-      <!-- OPPORTUNITY FILTERS -->
-      <div class="grid-toolbar">
-        <div class="filter-group">
-          <span class="filter-label">Filter by Sector:</span>
-          <select id="grid-sector-filter" class="filter-select" onchange="filterOpportunitiesBySector(this.value)">
-            <option value="all">All Sectors & Categories</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Opportunity Type:</span>
-          <div class="filter-pills">
-            <button class="filter-pill active" onclick="filterOpportunities('all', this)">All Opportunities</button>
-            <button class="filter-pill" onclick="filterOpportunities('Unbundler', this)">⚡ Unbundlers</button>
-            <button class="filter-pill" onclick="filterOpportunities('Anti-Bloat', this)">🛡️ Anti-Bloat</button>
-            <button class="filter-pill" onclick="filterOpportunities('Pricing Arbitrage', this)">💰 Pricing Arbitrage</button>
-            <button class="filter-pill" onclick="filterOpportunities('Specialist Vertical', this)">🎯 Vertical Specialists</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- OPPORTUNITIES CONTAINER -->
-      <div class="opportunities-grid" id="opportunities-container">
+      <div class="whitespace-grid" id="whitespace-container">
         <!-- Populated by JS -->
       </div>
     </section>
 
-    <!-- 3. SEARCH VOLUME & KEYWORD DEMAND VIEW -->
-    <section id="keyword-view-section" class="keyword-view-section hidden">
-      <div class="keyword-header-card">
+    <!-- 2. COMPETITOR ARCHETYPE CLUSTERS VIEW -->
+    <section id="clusters-view-section" class="clusters-view-section hidden">
+      <div class="keyword-header-card" style="border-color: rgba(168,85,247,0.3); background: linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(15,23,42,0.85) 100%);">
         <div class="kw-header-info">
-          <h3>📊 Live Google SEO Demand & Keyword Arbitrage</h3>
-          <p>Real-time search queries discovered via <b>Google Autocomplete API</b> + <b>PostgreSQL Review Corpus N-Gram Mining</b>.</p>
+          <h3>🔮 Existing Competitor Groups & Market Weaknesses</h3>
+          <p>Competitors grouped by <b>Feature Sets, Target Customers, and Pricing Models</b> to show you exactly why users leave them.</p>
         </div>
         <div class="kw-stat-badges">
-          <div class="kw-badge"><span class="num" id="kw-total-count">73</span> Keywords Analyzed</div>
-          <div class="kw-badge green"><span class="num">Live</span> Google API Stream</div>
+          <div class="kw-badge"><span class="kw-badge-num" id="cluster-archetype-count">--</span> Groups Found</div>
         </div>
       </div>
 
-      <div class="keyword-tables-grid">
-        <!-- TABLE 1: HIGHEST VOLUME SEARCHES -->
+      <!-- CLUSTERS FILTER & SEARCH TOOLBAR -->
+      <div class="filter-toolbar">
+        <div class="filter-btn-group">
+          <span class="filter-label">Filter:</span>
+          <button class="filter-pill active" id="cl-flt-all" onclick="filterCompetitorClusters('all')">All Groups</button>
+          <button class="filter-pill" id="cl-flt-enterprise" onclick="filterCompetitorClusters('enterprise')">🏢 Giant Enterprise Suites</button>
+          <button class="filter-pill" id="cl-flt-midmarket" onclick="filterCompetitorClusters('midmarket')">⚡ Modern / Mid-Market Tools</button>
+          <button class="filter-pill" id="cl-flt-smb" onclick="filterCompetitorClusters('smb')">🌱 Budget / Small Business Tools</button>
+        </div>
+        <div class="filter-search-wrap">
+          <input type="text" id="cl-search-input" class="filter-search-input" placeholder="🔍 Search competitor group or software..." oninput="searchCompetitorClusters(this.value)">
+        </div>
+      </div>
+
+      <div class="clusters-grid" id="clusters-container">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- 3. STRATEGIC INTELLIGENCE HUB & RED-TEAM AUDIT VIEW -->
+    <section id="strategy-view-section" class="strategy-view-section hidden">
+      <div class="keyword-header-card" style="border-color: rgba(56,189,248,0.3); background: linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+        <div class="kw-header-info">
+          <h3>🛡️ Multi-Agent Intelligence Strategy & Red-Team Gate</h3>
+          <p>Inspect <b>Agent 2 Domain Physics & Weight Calculations</b> and <b>Agent 4 Red-Team Anti-Hallucination Verification</b>.</p>
+        </div>
+        <div class="kw-stat-badges">
+          <div class="kw-badge green"><span class="kw-badge-num">100%</span> Grounded Verbatim</div>
+        </div>
+      </div>
+
+      <div id="strategic-intelligence-hub" class="strategic-hub-deck" style="margin-bottom:0;">
+        <!-- CARD 1: DYNAMIC CATEGORY WEIGHT STRATEGY -->
+        <div class="strategic-card weight-strategy-card" id="card-weight-strategy">
+          <div class="strategic-card-header">
+            <div class="strat-title-group">
+              <span class="strat-icon">⚖️</span>
+              <div>
+                <h4>Agent 2: Category Weight Strategy & Formula Tuning</h4>
+                <p>Dynamic mathematical similarity weights computed for <span id="strat-cat-name" class="highlight-txt">Help Desk</span> based on domain physics.</p>
+              </div>
+            </div>
+            <span class="strat-badge purple">Dynamic Formula Active</span>
+          </div>
+          
+          <div class="weights-gauge-grid" id="weights-gauge-container">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- CARD 2: AGENT 4 RED-TEAM AUDIT SUMMARY -->
+        <div class="strategic-card red-team-card" id="card-red-team-audit">
+          <div class="strategic-card-header">
+            <div class="strat-title-group">
+              <span class="strat-icon">🛡️</span>
+              <div>
+                <h4>Agent 4: Red-Team Adversarial Audit Gate</h4>
+                <p>Anti-hallucination verification cross-checking proposed omissions against verbatim G2/Capterra quotes.</p>
+              </div>
+            </div>
+            <span class="strat-badge emerald" id="strat-audit-status">Audit Passed</span>
+          </div>
+
+          <div class="audit-summary-body" id="audit-summary-container">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. PAIN NETWORK & OMISSION GRAPH VIEW -->
+    <section id="paingraph-view-section" class="paingraph-view-section hidden">
+      <div class="keyword-header-card" style="border-color: rgba(244,63,94,0.3); background: linear-gradient(135deg, rgba(244,63,94,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+        <div class="kw-header-info">
+          <h3>🕸️ Cross-Cluster Pain Network & Systemic Omission Graph</h3>
+          <p>Interactive graph showing how customer dissatisfaction connects across incumbent groups—and highlights <b>100% Unresolved Blind Spots</b> ripe for Micro-SaaS disruption.</p>
+        </div>
+        <div class="kw-stat-badges">
+          <button class="btn-primary" onclick="loadPainGraphView(activeCategorySlug)" style="background:linear-gradient(135deg, #F43F5E 0%, #E11D48 100%); color:#FFF;">
+            🔄 Refresh Pain Graph
+          </button>
+        </div>
+      </div>
+
+      <!-- PAIN GRAPH CONTAINER -->
+      <div class="paingraph-wrapper">
+        <div class="paingraph-toolbar">
+          <div class="pg-filter-group">
+            <span class="pg-label">Filter Nodes:</span>
+            <button class="pg-btn active" id="pg-flt-all" onclick="filterPainGraph('all')">All Nodes</button>
+            <button class="pg-btn" id="pg-flt-shared" onclick="filterPainGraph('shared')">Shared Bridges</button>
+            <button class="pg-btn" id="pg-flt-omissions" onclick="filterPainGraph('omissions')">🚨 Unresolved Omissions</button>
+            <button class="pg-btn" id="pg-flt-isolated" onclick="filterPainGraph('isolated')">Cluster Specific</button>
+          </div>
+          <div class="pg-filter-group">
+            <input type="text" id="pg-search-input" class="pg-search" placeholder="Search pain or feature..." oninput="searchPainGraph(this.value)">
+            <button class="pg-btn" id="pg-btn-physics" onclick="toggleGraphPhysics()">⏸️ Physics</button>
+            <button class="pg-btn" onclick="resetGraphCamera()">🎯 Center View</button>
+            <button class="pg-btn" onclick="zoomGraph(1.2)">🔍+</button>
+            <button class="pg-btn" onclick="zoomGraph(0.8)">🔍-</button>
+          </div>
+        </div>
+
+        <div id="paingraph-canvas-container" class="paingraph-canvas-container">
+          <canvas id="paingraph-canvas"></canvas>
+          
+          <!-- GRAPH LEGEND OVERLAY -->
+          <div class="paingraph-legend-box">
+            <div class="pg-legend-item"><span class="pg-dot dot-cluster"></span> Competitor Cluster Archetype</div>
+            <div class="pg-legend-item"><span class="pg-dot dot-bridge"></span> Shared Cross-Cluster Pain Bridge</div>
+            <div class="pg-legend-item"><span class="pg-dot dot-omission"></span> 🚨 100% Unresolved Systemic Omission</div>
+            <div class="pg-legend-item"><span class="pg-dot dot-solution"></span> 🚀 Validated Micro-SaaS Wedge</div>
+          </div>
+
+          <!-- HOVER TOOLTIP -->
+          <div id="pg-hover-tooltip" class="pg-hover-tooltip hidden"></div>
+
+          <!-- INTERACTIVE INSPECTOR DRAWER -->
+          <div id="paingraph-inspector-drawer" class="paingraph-inspector-drawer closed">
+            <div class="pg-inspector-header">
+              <div class="pg-insp-badge-row">
+                <span class="pg-insp-type-badge" id="pg-insp-type">Node Type</span>
+                <span class="pg-insp-severity-badge" id="pg-insp-severity">Severity: 9.5</span>
+              </div>
+              <button class="pg-insp-close" onclick="closePainGraphInspector()">&times;</button>
+            </div>
+            <div class="pg-inspector-body" id="pg-insp-body">
+              <!-- Populated by JS on node click -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. KEYWORD SEARCH VOLUME VIEW -->
+    <section id="keyword-view-section" class="keyword-view-section hidden">
+      <div class="keyword-header-card">
+        <div class="kw-header-info">
+          <h3>📊 Live Google Search Demand & Keyword Trends</h3>
+          <p>Real-time monthly search volumes, 5-year trend trajectories, and cost-per-click values grounded via Google Trends & Autocomplete APIs.</p>
+        </div>
+        <div class="kw-stat-badges">
+          <div class="kw-badge"><span class="kw-badge-num" id="kw-total-count">--</span> Tracked Keywords</div>
+          <div class="kw-badge green"><span class="kw-badge-num" id="kw-growing-count">--</span> High YoY Surges</div>
+        </div>
+      </div>
+
+      <div class="kw-tables-grid">
         <div class="kw-card">
           <div class="kw-card-header">
-            <h4>🔥 Highest Volume Incumbent Churn Keywords</h4>
-            <span class="badge-tag">High Search Demand</span>
+            <h4>🚀 Fastest Growing Micro-SaaS Queries</h4>
+            <span class="badge green">YoY Growth > 100%</span>
           </div>
-          <div class="table-responsive">
-            <table class="data-table">
+          <div class="table-wrapper">
+            <table class="kw-table">
               <thead>
                 <tr>
-                  <th>Live Google Search Query</th>
-                  <th>Monthly Volume</th>
+                  <th>Keyword / Search Query</th>
+                  <th>Monthly Vol</th>
                   <th>YoY Growth</th>
-                  <th>Est. CPC</th>
-                  <th>Intent</th>
+                  <th>Trend Signal</th>
                 </tr>
               </thead>
-              <tbody id="table-highest-volume">
+              <tbody id="fastest-growing-tbody">
                 <!-- Populated by JS -->
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- TABLE 2: FASTEST GROWING BREAKOUT QUERIES -->
         <div class="kw-card">
           <div class="kw-card-header">
-            <h4>🚀 Fastest Growing Breakout Queries (YoY > 150%)</h4>
-            <span class="badge-tag green">High Velocity</span>
+            <h4>🔥 Highest Volume Software Buyer Searches</h4>
+            <span class="badge blue">High Intent B2B</span>
           </div>
-          <div class="table-responsive">
-            <table class="data-table">
+          <div class="table-wrapper">
+            <table class="kw-table">
               <thead>
                 <tr>
-                  <th>Breakout Search Query</th>
-                  <th>YoY Growth</th>
-                  <th>Monthly Volume</th>
+                  <th>Keyword / Search Query</th>
+                  <th>Monthly Vol</th>
                   <th>Est. CPC</th>
-                  <th>Disruption Playbook</th>
+                  <th>Market Intent</th>
                 </tr>
               </thead>
-              <tbody id="table-fastest-growing">
+              <tbody id="highest-volume-tbody">
                 <!-- Populated by JS -->
               </tbody>
             </table>
@@ -408,19 +420,194 @@
       </div>
     </div>
 
-    <!-- MODAL OVERLAY: COMPLETE 33 SECTORS HIERARCHY DIRECTORY -->
+    <!-- MODAL OVERLAY: G2 CATEGORY DIRECTORY & TAXONOMY -->
     <div id="hierarchy-modal-overlay" class="modal-overlay hidden" onclick="closeHierarchyModal(event)">
       <div class="modal-card hierarchy-modal-card" onclick="event.stopPropagation()">
         <button class="modal-close" onclick="closeHierarchyModal()">&times;</button>
         <div class="modal-header-evidence">
-          <h3>📂 Complete Macro Sectors & Subcategories Directory</h3>
-          <p>Browse all 33 Root Macro Domains and their 1,887 Sub-Categories. Click any category to explore its orbit or run AI harvesting.</p>
+          <h3>📂 G2 Category Directory: Scanned Opportunities & Full Taxonomy</h3>
+          <p>Select any already-scanned category with verified data, or choose any new subcategory to run the 5-Agent Discovery Engine.</p>
         </div>
+
+        <!-- DIRECTORY VIEW TOGGLE (SCANNED VS ALL) -->
+        <div class="hierarchy-tab-toggle">
+          <button class="hierarchy-tab-btn active" id="dir-tab-scanned" onclick="setHierarchyDirectoryFilter('scanned')">
+            🟢 Already Scanned & Mined (<span id="scanned-cat-count">6</span> Categories)
+          </button>
+          <button class="hierarchy-tab-btn" id="dir-tab-all" onclick="setHierarchyDirectoryFilter('all')">
+            📂 Complete G2 Taxonomy (1,887 Sub-Categories)
+          </button>
+        </div>
+
         <div class="hierarchy-search-bar">
-          <input type="text" id="hierarchy-filter-input" placeholder="Filter categories (e.g. Customer Service, Help Desk, CRM, Accounting)..." oninput="filterHierarchyModal(this.value)">
+          <input type="text" id="hierarchy-filter-input" placeholder="Search by sector or category (e.g. Help Desk, CRM, Accounting, Marketing, Security)..." oninput="filterHierarchyModal(this.value)">
         </div>
         <div id="hierarchy-tree-container" class="hierarchy-tree-container">
           <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL OVERLAY: UNIFIED 3-PHASE PIPELINE & 5-AGENT LIVE PROGRESS TRACKER -->
+    <div id="agent-progress-modal" class="modal-overlay hidden" onclick="handleAgentModalOverlayClick(event)">
+      <div class="modal-card agent-progress-modal-card" onclick="event.stopPropagation()">
+        <div class="agent-modal-header">
+          <div class="agent-modal-brand">
+            <div class="agent-pulse-icon">⚡</div>
+            <div>
+              <h3 id="agent-modal-title">End-to-End Pipeline & 5-Agent Discovery Loop</h3>
+              <p id="agent-modal-subtitle">Live real-time telemetry streaming for <span id="prog-target-name" class="highlight-target">Help Desk Software</span></p>
+            </div>
+          </div>
+          <button id="btn-close-agent-modal" class="modal-close" onclick="closeAgentProgressModal()">&times;</button>
+        </div>
+
+        <!-- 3-PHASE PIPELINE STATUS BREADCRUMB -->
+        <div class="pipeline-phases-bar" id="pipeline-phases-bar">
+          <div class="pipeline-phase-pill active" id="phase-pill-1">
+            <span class="phase-pill-badge">Phase 1</span>
+            <span class="phase-pill-title">Taxonomy & Market Discovery</span>
+          </div>
+          <div class="pipeline-phase-arrow">➔</div>
+          <div class="pipeline-phase-pill" id="phase-pill-2">
+            <span class="phase-pill-badge">Phase 2</span>
+            <span class="phase-pill-title">Review Ingestion & Profiling</span>
+          </div>
+          <div class="pipeline-phase-arrow">➔</div>
+          <div class="pipeline-phase-pill" id="phase-pill-3">
+            <span class="phase-pill-badge">Phase 3</span>
+            <span class="phase-pill-title">5-Agent AI Loop & Math Matrix</span>
+          </div>
+        </div>
+
+        <!-- PROGRESS METRICS STATS BAR -->
+        <div class="agent-telemetry-kpis">
+          <div class="telemetry-kpi-card">
+            <span class="telemetry-kpi-label">Category Domain</span>
+            <div class="telemetry-kpi-val cyan" id="prog-cat-domain">Customer Service</div>
+            <span class="telemetry-kpi-sub" id="prog-cat-sub">Subcategory Resolved</span>
+          </div>
+          <div class="telemetry-kpi-card glow-cyan">
+            <span class="telemetry-kpi-label">Products & Reviews</span>
+            <div class="telemetry-kpi-val cyan" id="prog-scraped-prods">-- / --</div>
+            <span class="telemetry-kpi-sub" id="prog-reviews-sub">Full Extraction</span>
+          </div>
+          <div class="telemetry-kpi-card glow-purple">
+            <span class="telemetry-kpi-label">Active Phase / Agent</span>
+            <div class="telemetry-kpi-val purple" id="prog-active-agent">Initializing</div>
+            <span class="telemetry-kpi-sub" id="prog-agent-role">Phase 1: Discovery</span>
+          </div>
+          <div class="telemetry-kpi-card glow-emerald">
+            <span class="telemetry-kpi-label">Pipeline Progress</span>
+            <div class="telemetry-kpi-val emerald" id="prog-percent-text">0%</div>
+            <span class="telemetry-kpi-sub" id="prog-status-text">Starting pipeline...</span>
+          </div>
+        </div>
+
+        <!-- GLOWING ANIMATED PROGRESS BAR -->
+        <div class="agent-prog-container">
+          <div class="agent-prog-track">
+            <div id="prog-bar-fill" class="agent-prog-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- VISUAL 10-STEP MULTI-PHASE PROGRESS STEPPER -->
+        <div class="agent-stepper" id="agent-stepper">
+          <!-- PHASE 1: STEPS 1-2 -->
+          <div class="stepper-step active" id="step-1" data-step="1">
+            <div class="step-circle"><span class="step-num">1</span></div>
+            <div class="step-label">Taxonomy Scout</div>
+            <span class="step-phase-tag">P1</span>
+          </div>
+          <div class="stepper-line" id="line-1"></div>
+
+          <div class="stepper-step" id="step-2" data-step="2">
+            <div class="step-circle"><span class="step-num">2</span></div>
+            <div class="step-label">Market Indexer</div>
+            <span class="step-phase-tag">P1</span>
+          </div>
+          <div class="stepper-line" id="line-2"></div>
+
+          <!-- PHASE 2: STEPS 3-4 -->
+          <div class="stepper-step" id="step-3" data-step="3">
+            <div class="step-circle"><span class="step-num">3</span></div>
+            <div class="step-label">Review Harvester</div>
+            <span class="step-phase-tag">P2</span>
+          </div>
+          <div class="stepper-line" id="line-3"></div>
+
+          <div class="stepper-step" id="step-4" data-step="4">
+            <div class="step-circle"><span class="step-num">4</span></div>
+            <div class="step-label">Feature Extractor</div>
+            <span class="step-phase-tag">P2</span>
+          </div>
+          <div class="stepper-line" id="line-4"></div>
+
+          <!-- PHASE 3: STEPS 5-10 -->
+          <div class="stepper-step" id="step-5" data-step="5">
+            <div class="step-circle"><span class="step-num">5</span></div>
+            <div class="step-label">1. Normalizer</div>
+            <span class="step-phase-tag">P3</span>
+          </div>
+          <div class="stepper-line" id="line-5"></div>
+
+          <div class="stepper-step" id="step-6" data-step="6">
+            <div class="step-circle"><span class="step-num">6</span></div>
+            <div class="step-label">2. Strategist</div>
+            <span class="step-phase-tag">P3</span>
+          </div>
+          <div class="stepper-line" id="line-6"></div>
+
+          <div class="stepper-step" id="step-7" data-step="7">
+            <div class="step-circle"><span class="step-num">7</span></div>
+            <div class="step-label">3. Math Matrix</div>
+            <span class="step-phase-tag">P3</span>
+          </div>
+          <div class="stepper-line" id="line-7"></div>
+
+          <div class="stepper-step" id="step-8" data-step="8">
+            <div class="step-circle"><span class="step-num">8</span></div>
+            <div class="step-label">4. Formulator</div>
+            <span class="step-phase-tag">P3</span>
+          </div>
+          <div class="stepper-line" id="line-8"></div>
+
+          <div class="stepper-step" id="step-9" data-step="9">
+            <div class="step-circle"><span class="step-num">9</span></div>
+            <div class="step-label">5. Red-Team</div>
+            <span class="step-phase-tag">P3</span>
+          </div>
+          <div class="stepper-line" id="line-9"></div>
+
+          <div class="stepper-step" id="step-10" data-step="10">
+            <div class="step-circle"><span class="step-num">10</span></div>
+            <div class="step-label">6. Architect & SEO</div>
+            <span class="step-phase-tag">P3</span>
+          </div>
+        </div>
+
+        <!-- LIVE STREAMING TERMINAL CONSOLE -->
+        <div class="agent-terminal-box">
+          <div class="terminal-header">
+            <div class="terminal-controls">
+              <span class="term-dot red"></span>
+              <span class="term-dot yellow"></span>
+              <span class="term-dot green"></span>
+            </div>
+            <span class="term-title">3-Phase Execution Stream & Thought Telemetry</span>
+            <span class="term-live-tag"><span class="live-dot"></span> LIVE NDJSON STREAM</span>
+          </div>
+          <div class="terminal-body" id="agent-terminal-logs">
+            <div class="term-log-line system">[SYSTEM] Ready. Subscribing to 3-Phase NDJSON telemetry feed...</div>
+          </div>
+        </div>
+
+        <!-- FOOTER ACTIONS -->
+        <div class="agent-modal-footer">
+          <span class="agent-footer-hint" id="agent-footer-hint">Phase 1 in progress. Connecting to market index and discovering competitors...</span>
+          <button id="btn-finish-agent-modal" class="btn-primary" onclick="closeAgentProgressModal()" disabled>
+            Done & View Strategic Intelligence →
+          </button>
         </div>
       </div>
     </div>
@@ -430,3 +617,4 @@
   <script src="/static/app.js"></script>
 </body>
 </html>
+
