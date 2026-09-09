@@ -1,17 +1,10 @@
-// G2 Micro-SaaS AI Brain - Orbital Universe & Hierarchical Discovery Command Center
+// G2 Micro-SaaS AI Brain - Autonomous White Space Discovery Command Center
 let allOpportunities = [];
-let activeFilter = 'all';
-let activeSectorFilter = 'all';
 let activeCategorySlug = 'help-desk';
 let activeRootSlug = 'customer-service';
 let categoryHierarchy = [];
-let currentOrbitData = null;
-let isOrbitSpinning = true;
-let currentSpeedMultiplier = 1;
-let areLasersActive = true;
 let allKeywordsData = null;
-let harvesterMode = 'subcategory'; // 'subcategory' or 'root_sector'
-let renderedCanvasNodes = []; // Tracks cosmic objects for canvas collision and click interactions
+let activeMainView = 'clusters';
 
 const SECTOR_ICONS = {
   'customer-service': '🎧',
@@ -33,66 +26,47 @@ const SECTOR_ICONS = {
 document.addEventListener('DOMContentLoaded', () => {
   loadStats();
   loadHierarchy();
-  loadOpportunities();
   loadCategoryDatalist();
-  loadKeywords('all');
-  initCanvasInteractions();
+  switchMainView('clusters');
 });
 
 /* ==========================================================================
-   VIEW SWITCHING
+   1. VIEW SWITCHING (3 HIGH-CONVICTION PILLARS)
    ========================================================================== */
 function switchMainView(mode) {
-  const orbitSection = document.getElementById('orbit-view-section');
-  const gridSection = document.getElementById('grid-view-section');
+  activeMainView = mode;
   const keywordSection = document.getElementById('keyword-view-section');
   const clustersSection = document.getElementById('clusters-view-section');
   const paingraphSection = document.getElementById('paingraph-view-section');
-  const orbitTabBtn = document.getElementById('tab-btn-orbit');
-  const gridTabBtn = document.getElementById('tab-btn-grid');
   const kwTabBtn = document.getElementById('tab-btn-keywords');
   const clustersTabBtn = document.getElementById('tab-btn-clusters');
   const paingraphTabBtn = document.getElementById('tab-btn-paingraph');
 
-  if (orbitSection) orbitSection.classList.add('hidden');
-  if (gridSection) gridSection.classList.add('hidden');
   if (keywordSection) keywordSection.classList.add('hidden');
   if (clustersSection) clustersSection.classList.add('hidden');
   if (paingraphSection) paingraphSection.classList.add('hidden');
 
-  if (orbitTabBtn) orbitTabBtn.classList.remove('active');
-  if (gridTabBtn) gridTabBtn.classList.remove('active');
   if (kwTabBtn) kwTabBtn.classList.remove('active');
   if (clustersTabBtn) clustersTabBtn.classList.remove('active');
   if (paingraphTabBtn) paingraphTabBtn.classList.remove('active');
 
-  if (mode === 'orbit') {
-    if (orbitSection) orbitSection.classList.remove('hidden');
-    if (orbitTabBtn) orbitTabBtn.classList.add('active');
-    if (activeCategorySlug) {
-      loadOrbitData(activeCategorySlug);
-    }
-  } else if (mode === 'grid') {
-    if (gridSection) gridSection.classList.remove('hidden');
-    if (gridTabBtn) gridTabBtn.classList.add('active');
-    applyOpportunityFilters();
-  } else if (mode === 'keywords') {
+  if (mode === 'keywords') {
     if (keywordSection) keywordSection.classList.remove('hidden');
     if (kwTabBtn) kwTabBtn.classList.add('active');
     loadKeywords(activeCategorySlug || 'all');
-  } else if (mode === 'clusters') {
-    if (clustersSection) clustersSection.classList.remove('hidden');
-    if (clustersTabBtn) clustersTabBtn.classList.add('active');
-    loadClustersView(activeCategorySlug || 'help-desk');
   } else if (mode === 'paingraph') {
     if (paingraphSection) paingraphSection.classList.remove('hidden');
     if (paingraphTabBtn) paingraphTabBtn.classList.add('active');
     loadPainGraphView(activeCategorySlug || 'help-desk');
+  } else { // default 'clusters'
+    if (clustersSection) clustersSection.classList.remove('hidden');
+    if (clustersTabBtn) clustersTabBtn.classList.add('active');
+    loadClustersView(activeCategorySlug || 'help-desk');
   }
 }
 
 /* ==========================================================================
-   METRICS & HIERARCHICAL CATEGORY DATA
+   2. METRICS & TAXONOMY HIERARCHY
    ========================================================================== */
 async function loadStats() {
   try {
@@ -103,8 +77,8 @@ async function loadStats() {
     if (data.reviews_count) document.getElementById('stat-reviews').innerText = data.reviews_count;
     if (data.opportunities_count) {
       document.getElementById('stat-opportunities').innerText = data.opportunities_count;
-      const gridBadge = document.getElementById('grid-count-badge');
-      if (gridBadge) gridBadge.innerText = `${data.opportunities_count} Ideas`;
+      const wsBadge = document.getElementById('whitespace-count-badge');
+      if (wsBadge) wsBadge.innerText = `${data.opportunities_count} White Spaces`;
     }
   } catch (err) {
     console.error('Error loading stats:', err);
@@ -116,143 +90,114 @@ async function loadHierarchy() {
     const res = await fetch('/api/hierarchy');
     categoryHierarchy = await res.json();
     
-    // 1. Populate Harvester Root Dropdown
-    populateHarvesterDropdowns();
+    // 1. Populate Command Bar Dropdowns
+    populateCommandBarDropdowns();
 
-    // 2. Populate Root Sector Tabs in Orbit View
-    renderRootSectorTabs();
-
-    // 3. Populate Grid Sector Filter
-    populateGridSectorFilter();
-
-    // 4. Populate Full Hierarchy Directory
+    // 2. Populate Full Hierarchy Directory Modal
     renderHierarchyDirectory(categoryHierarchy);
-
   } catch (err) {
     console.error('Error loading category hierarchy:', err);
   }
 }
 
-function renderRootSectorTabs() {
-  const tabsRow = document.getElementById('root-sector-tabs');
-  if (!tabsRow || !categoryHierarchy.length) return;
+function populateCommandBarDropdowns() {
+  const rootSelect = document.getElementById('harvester-root-select');
+  if (!rootSelect) return;
 
-  // Find root with active opportunities first
-  let defaultRoot = categoryHierarchy.find(r => r.slug === activeRootSlug) || categoryHierarchy[0];
-  activeRootSlug = defaultRoot.slug;
+  rootSelect.innerHTML = categoryHierarchy.map(r => `
+    <option value="${r.slug}">${SECTOR_ICONS[r.slug] || '📁'} ${r.name} (${r.subcategory_count} subcategories)</option>
+  `).join('');
 
-  tabsRow.innerHTML = categoryHierarchy.slice(0, 10).map((root) => {
-    const icon = SECTOR_ICONS[root.slug] || '📁';
-    const isActive = root.slug === activeRootSlug;
-    const oppBadge = root.total_opportunity_count > 0 
-      ? `<span class="pill-count active">${root.total_opportunity_count} Satellites</span>`
-      : `<span class="pill-count">${root.subcategory_count} Subs</span>`;
-
-    return `
-      <button class="root-tab ${isActive ? 'active' : ''}" data-slug="${root.slug}" onclick="selectRootSector('${root.slug}', this)">
-        <span>${icon} ${root.name}</span>
-        ${oppBadge}
-      </button>
-    `;
-  }).join('');
-
-  renderSubcategoryPills(defaultRoot);
+  if (categoryHierarchy.length > 0) {
+    rootSelect.value = activeRootSlug || categoryHierarchy[0].slug;
+    onHarvesterRootChange(rootSelect.value);
+  }
 }
 
-function selectRootSector(rootSlug, btnElement) {
+function onHarvesterRootChange(rootSlug) {
   activeRootSlug = rootSlug;
-  document.querySelectorAll('.root-tab').forEach(t => t.classList.remove('active'));
-  if (btnElement) {
-    btnElement.classList.add('active');
-  } else {
-    const tab = document.querySelector(`.root-tab[data-slug="${rootSlug}"]`);
-    if (tab) tab.classList.add('active');
-  }
+  const subSelect = document.getElementById('harvester-sub-select');
+  if (!subSelect) return;
 
   const root = categoryHierarchy.find(r => r.slug === rootSlug);
-  if (root) {
-    renderSubcategoryPills(root);
-  }
-}
-
-function renderSubcategoryPills(root) {
-  const titleEl = document.getElementById('active-root-title');
-  const countEl = document.getElementById('active-subcat-count');
-  const pillsRow = document.getElementById('active-subcat-pills');
-
-  if (titleEl) titleEl.innerText = `Sub-Categories in ${root.name}:`;
-  if (countEl) countEl.innerText = `${root.subcategory_count} Available`;
-
-  if (!root.subcategories || root.subcategories.length === 0) {
-    pillsRow.innerHTML = `
-      <button class="cat-pill active" onclick="selectOrbitCategory('${root.slug}', this)">
-        <span>🌟 ${root.name} (Direct)</span>
-      </button>
-    `;
-    selectOrbitCategory(root.slug);
-    return;
-  }
-
-  // Find subcategory with active opportunities or first one
-  const activeSub = root.subcategories.find(s => s.opportunity_count > 0) || root.subcategories[0];
-
-  pillsRow.innerHTML = root.subcategories.map((sub) => {
-    const isActive = sub.slug === activeSub.slug;
-    const badge = sub.opportunity_count > 0 
-      ? `<span class="pill-count active">🟢 ${sub.opportunity_count} Satellites</span>` 
-      : `<span class="pill-count">Unmined</span>`;
-
-    return `
-      <button class="cat-pill ${isActive ? 'active' : ''}" data-slug="${sub.slug}" onclick="selectOrbitCategory('${sub.slug}', this)">
-        <span>${sub.name}</span>
-        ${badge}
-      </button>
-    `;
-  }).join('');
-
-  selectOrbitCategory(activeSub.slug);
-}
-
-function selectOrbitCategory(slug, btnElement) {
-  activeCategorySlug = slug;
-  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-  if (btnElement) {
-    btnElement.classList.add('active');
+  if (!root || !root.subcategories || root.subcategories.length === 0) {
+    subSelect.innerHTML = `<option value="${rootSlug}">Direct (${root ? root.name : rootSlug})</option>`;
+    activeCategorySlug = rootSlug;
   } else {
-    const pill = document.querySelector(`.cat-pill[data-slug="${slug}"]`);
-    if (pill) pill.classList.add('active');
+    subSelect.innerHTML = root.subcategories.map(s => `
+      <option value="${s.slug}">${s.name} ${s.opportunity_count > 0 ? `(🟢 ${s.opportunity_count} Ideas)` : ''}</option>
+    `).join('');
+    
+    const matched = root.subcategories.find(s => s.slug === activeCategorySlug);
+    if (matched) {
+      subSelect.value = activeCategorySlug;
+    } else {
+      activeCategorySlug = root.subcategories[0].slug;
+      subSelect.value = activeCategorySlug;
+    }
   }
-  loadOrbitData(slug);
+  reloadActiveView();
+}
+
+function onHarvesterSubChange(subSlug) {
+  activeCategorySlug = subSlug;
+  reloadActiveView();
 }
 
 function onCategorySearchSelect(value) {
   if (!value) return;
-  
-  // Find which root sector this category belongs to
   for (const root of categoryHierarchy) {
     if (root.slug === value) {
-      selectRootSector(root.slug);
+      syncCategorySelectors(root.slug, root.slug);
       return;
     }
     const sub = (root.subcategories || []).find(s => s.slug === value || s.name.toLowerCase() === value.toLowerCase());
     if (sub) {
-      selectRootSector(root.slug);
-      selectOrbitCategory(sub.slug);
+      syncCategorySelectors(root.slug, sub.slug);
       return;
     }
   }
-  
-  // Fallback direct load
-  selectOrbitCategory(value);
+  activeCategorySlug = value;
+  reloadActiveView();
+}
+
+function syncCategorySelectors(rootSlug, subSlug) {
+  activeRootSlug = rootSlug;
+  activeCategorySlug = subSlug;
+
+  const rootSelect = document.getElementById('harvester-root-select');
+  if (rootSelect) rootSelect.value = rootSlug;
+
+  const subSelect = document.getElementById('harvester-sub-select');
+  if (subSelect) {
+    const root = categoryHierarchy.find(r => r.slug === rootSlug);
+    if (root && root.subcategories) {
+      subSelect.innerHTML = root.subcategories.map(s => `
+        <option value="${s.slug}">${s.name} ${s.opportunity_count > 0 ? `(🟢 ${s.opportunity_count} Ideas)` : ''}</option>
+      `).join('');
+      subSelect.value = subSlug;
+    }
+  }
+  reloadActiveView();
+}
+
+function reloadActiveView() {
+  if (activeMainView === 'clusters') {
+    loadClustersView(activeCategorySlug);
+  } else if (activeMainView === 'paingraph') {
+    loadPainGraphView(activeCategorySlug);
+  } else if (activeMainView === 'keywords') {
+    loadKeywords(activeCategorySlug);
+  }
 }
 
 async function loadCategoryDatalist() {
   try {
     const res = await fetch('/api/categories?limit=1000');
     const cats = await res.json();
-    const orbitDatalist = document.getElementById('orbit-cat-datalist');
-    if (orbitDatalist) {
-      orbitDatalist.innerHTML = cats.map(c => `
+    const datalist = document.getElementById('category-datalist');
+    if (datalist) {
+      datalist.innerHTML = cats.map(c => `
         <option value="${c.slug}">${c.name} ${c.parent_name ? `(${c.parent_name})` : ''}</option>
       `).join('');
     }
@@ -262,99 +207,30 @@ async function loadCategoryDatalist() {
 }
 
 /* ==========================================================================
-   HARVESTER CONTROLS & DUAL-MODE LOGIC
+   3. 5-AGENT DISCOVERY TRIGGER
    ========================================================================== */
-function setHarvesterMode(mode) {
-  harvesterMode = mode;
-  const btnSub = document.getElementById('btn-mode-sub');
-  const btnRoot = document.getElementById('btn-mode-root');
-  const subGroup = document.getElementById('subcat-control-group');
-  const btnText = document.getElementById('btn-text');
-
-  if (mode === 'root_sector') {
-    btnRoot.classList.add('active');
-    btnSub.classList.remove('active');
-    subGroup.style.opacity = '0.5';
-    subGroup.style.pointerEvents = 'none';
-    btnText.innerText = '🌳 Run Root Sector Batch Scan';
-  } else {
-    btnSub.classList.add('active');
-    btnRoot.classList.remove('active');
-    subGroup.style.opacity = '1';
-    subGroup.style.pointerEvents = 'auto';
-    btnText.innerText = '🎯 Run Sub-Category Deep Mine';
-  }
-}
-
-function populateHarvesterDropdowns() {
-  const rootSelect = document.getElementById('harvester-root-select');
-  if (!rootSelect) return;
-
-  rootSelect.innerHTML = categoryHierarchy.map(r => `
-    <option value="${r.slug}">${r.name} (${r.subcategory_count} sub-categories)</option>
-  `).join('');
-
-  if (categoryHierarchy.length > 0) {
-    rootSelect.value = categoryHierarchy[0].slug;
-    onHarvesterRootChange(categoryHierarchy[0].slug);
-  }
-}
-
-function onHarvesterRootChange(rootSlug) {
-  const subSelect = document.getElementById('harvester-sub-select');
-  if (!subSelect) return;
-
-  const root = categoryHierarchy.find(r => r.slug === rootSlug);
-  if (!root || !root.subcategories || root.subcategories.length === 0) {
-    subSelect.innerHTML = `<option value="${rootSlug}">Direct (${root ? root.name : rootSlug})</option>`;
-    return;
-  }
-
-  subSelect.innerHTML = root.subcategories.map(s => `
-    <option value="${s.slug}">${s.name} ${s.opportunity_count > 0 ? `(🟢 ${s.opportunity_count} Ideas)` : ''}</option>
-  `).join('');
-}
-
-function onHarvesterSubChange(subSlug) {
-  // Optional callback
-}
-
 async function triggerMine() {
-  const rootSelect = document.getElementById('harvester-root-select');
-  const subSelect = document.getElementById('harvester-sub-select');
+  const catSlug = activeCategorySlug || 'help-desk';
+  const catName = catSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  
+  openAgentProgressModal('Autonomous 5-Agent Collaborative Loop', catName, `Streaming live multi-agent execution & matrix math for <span id="prog-target-name" class="highlight-target">${catName}</span>`);
+  
   const btn = document.getElementById('btn-mine');
   const btnText = document.getElementById('btn-text');
   const spinner = document.getElementById('btn-spinner');
-  const status = document.getElementById('miner-status');
 
-  let targetSlug = '';
-  if (harvesterMode === 'root_sector') {
-    targetSlug = rootSelect.value;
-  } else {
-    targetSlug = subSelect.value || rootSelect.value;
-  }
+  if (btn) btn.disabled = true;
+  if (btnText) btnText.innerText = 'Running 5-Agent Loop...';
+  if (spinner) spinner.classList.remove('hidden');
 
-  if (!targetSlug) {
-    alert('Please select a category to harvest.');
-    return;
-  }
-
-  const catName = targetSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  openAgentProgressModal('Autonomous Live Review Harvester', catName, `Crawling negative reviews & mining unbundling opportunities for <span id="prog-target-name" class="highlight-target">${catName}</span>`);
-
-  btn.disabled = true;
-  btnText.innerText = harvesterMode === 'root_sector' ? 'Batch Harvesting Root Sector...' : 'AI Harvesting Live Reviews...';
-  spinner.classList.remove('hidden');
+  let latestWeightAnalysis = null;
+  let latestAuditResult = null;
 
   try {
-    const response = await fetch('/api/mine-stream', {
+    const response = await fetch('/api/cluster-and-mine-stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        category_slug: targetSlug,
-        mode: harvesterMode,
-        max_subcategories: 3
-      })
+      body: JSON.stringify({ category_slug: catSlug })
     });
 
     if (!response.ok) {
@@ -371,13 +247,13 @@ async function triggerMine() {
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
-      buffer = lines.pop();
+      buffer = lines.pop(); // keep last incomplete chunk
 
       for (const line of lines) {
         if (!line.trim()) continue;
         try {
           const event = JSON.parse(line);
-
+          
           if (event.total_products !== undefined && event.total_products > 0) {
             const totEl = document.getElementById('prog-total-prods');
             if (totEl) totEl.innerText = event.total_products;
@@ -388,7 +264,7 @@ async function triggerMine() {
           }
           if (event.active_agent) {
             const actEl = document.getElementById('prog-active-agent');
-            if (actEl) actEl.innerText = event.active_agent;
+            if (actEl) actEl.innerText = event.active_agent.replace('Agent', '').trim();
           }
           if (event.progress_pct !== undefined) {
             const pctEl = document.getElementById('prog-percent-text');
@@ -404,49 +280,61 @@ async function triggerMine() {
             updateStepper(event.step_index);
           }
           if (event.log_entry) {
-            appendTerminalLog(event.active_agent || 'Harvester', event.log_entry);
+            appendTerminalLog(event.active_agent || 'Orchestrator', event.log_entry);
+          }
+
+          if (event.data) {
+            if (event.data.weight_analysis) latestWeightAnalysis = event.data.weight_analysis;
+            if (event.data.audit_result) latestAuditResult = event.data.audit_result;
           }
 
           if (event.type === 'complete' || event.progress_pct === 100) {
+            if (event.result) {
+              if (event.result.weight_analysis) latestWeightAnalysis = event.result.weight_analysis;
+              if (event.result.audit_result) latestAuditResult = event.result.audit_result;
+            }
             const finishBtn = document.getElementById('btn-finish-agent-modal');
             if (finishBtn) {
               finishBtn.disabled = false;
-              finishBtn.innerText = 'Done & View Category Intelligence →';
+              finishBtn.innerText = 'Done & View Strategic Intelligence →';
             }
             const hint = document.getElementById('agent-footer-hint');
-            if (hint) hint.innerText = '✓ Category harvest and AI unbundling completed successfully!';
+            if (hint) hint.innerText = '✓ All 5 Agents completed successfully. Matrix calculated, audit passed, and opportunities synthesized!';
           }
 
           if (event.type === 'error') {
-            appendTerminalLog('ERROR', event.error || 'Error occurred during harvesting.', 'error');
+            appendTerminalLog('ERROR', event.error || 'Unknown error occurred in agent loop.', 'error');
             const finishBtn = document.getElementById('btn-finish-agent-modal');
             if (finishBtn) {
               finishBtn.disabled = false;
               finishBtn.innerText = 'Close (Encountered Error)';
             }
           }
-        } catch (e) {
-          console.error('Parse error:', e);
+        } catch (parseErr) {
+          console.error('Error parsing stream chunk:', parseErr);
         }
       }
     }
 
-    await loadStats();
-    await loadHierarchy();
-    await loadOpportunities();
-    selectOrbitCategory(targetSlug);
+    renderStrategicIntelligence(catSlug, latestWeightAnalysis, latestAuditResult);
+
+    await Promise.all([
+      loadStats(),
+      loadHierarchy()
+    ]);
+    reloadActiveView();
   } catch (err) {
-    appendTerminalLog('ERROR', `Harvesting error: ${err.message}`, 'error');
-    alert(`Harvesting error: ${err.message}`);
+    appendTerminalLog('ERROR', `Stream connection error: ${err.message}`, 'error');
+    alert(`Discovery error: ${err.message}`);
   } finally {
-    btn.disabled = false;
-    btnText.innerText = harvesterMode === 'root_sector' ? '🌳 Run Root Sector Batch Scan' : '🎯 Run Sub-Category Deep Mine';
-    spinner.classList.add('hidden');
+    if (btn) btn.disabled = false;
+    if (btnText) btnText.innerText = '⚡ Run 5-Agent Discovery';
+    if (spinner) spinner.classList.add('hidden');
   }
 }
 
 /* ==========================================================================
-   FULL HIERARCHY DIRECTORY MODAL
+   4. FULL HIERARCHY DIRECTORY MODAL
    ========================================================================== */
 function openHierarchyModal() {
   document.getElementById('hierarchy-modal-overlay').classList.remove('hidden');
@@ -472,8 +360,8 @@ function renderHierarchyDirectory(hierarchyList) {
           <div class="root-header-title">
             <span class="icon">${icon}</span>
             <span class="name">${root.name}</span>
-            <span class="count-badge">${subList.length} sub-categories</span>
-            ${hasOpps ? `<span class="active-badge">🟢 ${root.total_opportunity_count} Satellites Active</span>` : ''}
+            <span class="count-badge">${subList.length} subcategories</span>
+            ${hasOpps ? `<span class="active-badge">🟢 ${root.total_opportunity_count} White Spaces</span>` : ''}
           </div>
           <span class="accordion-arrow">▼</span>
         </div>
@@ -482,9 +370,9 @@ function renderHierarchyDirectory(hierarchyList) {
             <div class="hierarchy-sub-item ${s.opportunity_count > 0 ? 'active-sub' : ''}" onclick="selectCategoryFromModal('${root.slug}', '${s.slug}')">
               <div class="sub-item-info">
                 <span class="sub-name">${s.name}</span>
-                ${s.opportunity_count > 0 ? `<span class="sub-badge">🟢 ${s.opportunity_count} Satellites</span>` : ''}
+                ${s.opportunity_count > 0 ? `<span class="sub-badge">🟢 ${s.opportunity_count} White Spaces</span>` : ''}
               </div>
-              <button class="btn-micro">Explore Orbit &rarr;</button>
+              <button class="btn-micro">Select &rarr;</button>
             </div>
           `).join('')}
         </div>
@@ -500,8 +388,7 @@ function toggleHierarchyAccordion(headerEl) {
 
 function selectCategoryFromModal(rootSlug, subSlug) {
   closeHierarchyModal();
-  selectRootSector(rootSlug);
-  selectOrbitCategory(subSlug);
+  syncCategorySelectors(rootSlug, subSlug);
 }
 
 function filterHierarchyModal(query) {
@@ -527,547 +414,7 @@ function filterHierarchyModal(query) {
   }).filter(Boolean);
 
   renderHierarchyDirectory(filtered);
-
-  // Auto expand matched cards
   document.querySelectorAll('.hierarchy-root-card').forEach(c => c.classList.add('expanded'));
-}
-
-/* ==========================================================================
-   ORBIT SYSTEM VISUAL ENGINE (HTML5 CANVAS WITH PHYSICS & LASERS)
-   ========================================================================== */
-async function loadOrbitData(slug) {
-  try {
-    const res = await fetch(`/api/orbit?category_slug=${slug}`);
-    const data = await res.json();
-    currentOrbitData = data;
-    renderOrbitSystem(data);
-  } catch (err) {
-    console.error(`Error loading orbit data for ${slug}:`, err);
-  }
-}
-
-function renderOrbitSystem(data) {
-  const systemTitle = document.getElementById('orbit-system-title');
-  if (systemTitle) {
-    const parentName = data.category.parent_name ? `${data.category.parent_name} / ` : '';
-    systemTitle.innerText = `${parentName}${data.category.name} Gravity Well`;
-  }
-
-  // 1. Populate Right Telemetry Panels
-  renderTelemetryHUD(data);
-
-  // 2. Populate Bottom Pulse Deck
-  renderBottomPulseDeck(data);
-
-  // 3. Start Canvas Engine
-  initOrbitCanvas(data);
-}
-
-function renderTelemetryHUD(data) {
-  // 1. Competitors List (Clickable with full personas and pain breakdown)
-  const compList = document.getElementById('hud-competitors-list');
-  const allProds = data.all_products || [];
-  document.getElementById('hud-competitor-count').innerText = `${allProds.length} Tracked`;
-
-  compList.innerHTML = allProds.map(p => {
-    const isBehemoth = p.orbit_tier === '0_behemoth';
-    const tag = isBehemoth ? '<span class="tier-tag red">Orbit 0: Goliath</span>' : '<span class="tier-tag yellow">Orbit 1: Challenger</span>';
-    return `
-      <div class="hud-item ${isBehemoth ? 'behemoth-item' : ''}" onclick="openCompetitorModal('${p.slug}')" title="Click to view personas and verbatim negative reviews">
-        <div class="hud-item-header">
-          <span class="prod-name">${p.name}</span>
-          ${tag}
-        </div>
-        <p class="prod-vuln">⚠️ <b>Vulnerability:</b> ${p.primary_vulnerability}</p>
-        <div class="prod-meta">
-          <span>⭐ ${p.rating_avg}</span>
-          <span>👥 ${p.pricing_model || 'Per-Seat'}</span>
-          <span>🏢 ${p.market_segment || 'Enterprise'}</span>
-          <span style="color:var(--cyan-glow); font-weight:600; margin-left:auto;">Deep Dossier &rarr;</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // 2. Pain List (Clickable to view full quotes & personas)
-  const painList = document.getElementById('hud-pain-list');
-  const pains = data.pain_clusters || [];
-  painList.innerHTML = pains.map(pc => `
-    <div class="hud-item pain-item" onclick="openPainClusterModal('${pc.slug}')" title="Click to view verbatim user quotes & personas">
-      <div class="hud-item-header">
-        <span class="pain-title">${pc.title}</span>
-        <span class="severity-badge">${pc.severity_score}/10 Severity</span>
-      </div>
-      <p class="pain-desc">${pc.summary}</p>
-      <div class="pain-bar-bg">
-        <div class="pain-bar-fill" style="width:${Math.min(100, Number(pc.severity_score) * 10)}%;"></div>
-      </div>
-    </div>
-  `).join('');
-
-  // 3. Satellites List (Clickable to view complete blueprint)
-  const satList = document.getElementById('hud-satellites-list');
-  const opps = data.orbit_2_satellites || [];
-  document.getElementById('hud-satellite-count').innerText = `${opps.length} Satellites`;
-
-  satList.innerHTML = opps.map((opp, idx) => {
-    const wedge = opp.unbundling_wedge || opp.value_proposition || 'Direct wedge';
-    const mrr = opp.target_mrr || opp.mrr_potential || '$15k MRR';
-    const devDays = opp.dev_timeline_days || (opp.dev_complexity ? opp.dev_complexity * 7 : 14);
-
-    return `
-      <div class="satellite-hud-item" onclick="openOpportunityModal(${opp.id})">
-        <div class="sat-header">
-          <span class="sat-badge">🛰️ Orbit 2 Moon #${idx + 1}</span>
-          <span class="sat-osi">OSI: ${opp.osi_score}</span>
-        </div>
-        <div class="sat-title">${opp.title}</div>
-        <p class="sat-wedge">🎯 <b>Wedge Play:</b> ${wedge}</p>
-        <div class="sat-meta-row">
-          <span>💰 ${mrr}</span>
-          <span>⏱️ ${devDays}d Build</span>
-          <span class="sat-cta">View Full Blueprint &rarr;</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderBottomPulseDeck(data) {
-  // 1. Attack Mapping
-  const attackGrid = document.getElementById('pulse-attack-mapping');
-  const opps = data.orbit_2_satellites || [];
-  const goliaths = data.orbit_0_behemoths || [];
-  const mainIncumbent = goliaths.length > 0 ? goliaths[0].name : 'Legacy Incumbents';
-
-  if (attackGrid) {
-    if (opps.length === 0) {
-      attackGrid.innerHTML = `
-        <div style="grid-column:1/-1; color:var(--text-muted); font-size:0.85rem; padding:1rem; text-align:center;">
-          No satellites currently in orbit. Run the AI Harvester above to synthesize attack vectors.
-        </div>
-      `;
-    } else {
-      attackGrid.innerHTML = opps.slice(0, 4).map(opp => `
-        <div class="attack-mapping-card" onclick="openOpportunityModal(${opp.id})">
-          <div class="attack-card-target">🎯 TARGETING: ${mainIncumbent}</div>
-          <div class="attack-card-title">${opp.title}</div>
-          <p class="attack-card-wedge">${opp.unbundling_wedge || opp.value_proposition}</p>
-        </div>
-      `).join('');
-    }
-  }
-
-  // 2. Keyword preview
-  const kwPreview = document.getElementById('pulse-keywords-preview');
-  if (kwPreview) {
-    fetch(`/api/keywords?category_slug=${data.category.slug}`)
-      .then(res => res.json())
-      .then(kwData => {
-        const keywords = kwData.all || [];
-        if (keywords.length === 0) {
-          kwPreview.innerHTML = `<div style="color:var(--text-muted); font-size:0.82rem;">No keywords synced for this subcategory yet.</div>`;
-          return;
-        }
-        kwPreview.innerHTML = keywords.slice(0, 4).map(k => `
-          <div class="pulse-kw-item">
-            <div>
-              <code>${k.keyword}</code>
-            </div>
-            <div class="pulse-kw-stats">
-              <span class="vol-badge">${Number(k.monthly_search_volume).toLocaleString()}/mo</span>
-              <span class="growth-badge ${k.growth_yoy_pct >= 100 ? 'high' : ''}">+${k.growth_yoy_pct}% YoY</span>
-              <b>$${Number(k.cpc_usd).toFixed(2)}</b>
-            </div>
-          </div>
-        `).join('');
-      })
-      .catch(() => {});
-  }
-}
-
-/* ==========================================================================
-   CANVAS ORBIT SIMULATION WITH COLLISION & CLICK SUPPORT
-   ========================================================================== */
-let orbitAnimFrame = null;
-let orbitAngle = 0;
-
-function initCanvasInteractions() {
-  const canvas = document.getElementById('orbit-canvas');
-  if (!canvas) return;
-
-  canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const mx = (e.clientX - rect.left) * scaleX;
-    const my = (e.clientY - rect.top) * scaleY;
-
-    const hovered = renderedCanvasNodes.find(node => {
-      const dx = mx - node.x;
-      const dy = my - node.y;
-      return Math.sqrt(dx * dx + dy * dy) <= node.radius;
-    });
-
-    if (hovered) {
-      canvas.style.cursor = 'pointer';
-    } else {
-      canvas.style.cursor = 'default';
-    }
-  });
-
-  canvas.addEventListener('click', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const mx = (e.clientX - rect.left) * scaleX;
-    const my = (e.clientY - rect.top) * scaleY;
-
-    const clicked = renderedCanvasNodes.find(node => {
-      const dx = mx - node.x;
-      const dy = my - node.y;
-      return Math.sqrt(dx * dx + dy * dy) <= node.radius;
-    });
-
-    if (clicked) {
-      if (clicked.type === 'goliath' || clicked.type === 'challenger') {
-        openCompetitorModal(clicked.data.slug);
-      } else if (clicked.type === 'satellite') {
-        openOpportunityModal(clicked.data.id);
-      }
-    }
-  });
-}
-
-function initOrbitCanvas(data) {
-  const canvas = document.getElementById('orbit-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-
-  if (orbitAnimFrame) {
-    cancelAnimationFrame(orbitAnimFrame);
-  }
-
-  const goliaths = data.orbit_0_behemoths || [];
-  const challengers = data.orbit_1_challengers || [];
-  const satellites = data.orbit_2_satellites || [];
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    renderedCanvasNodes = []; // Reset node tracking for this frame
-
-    if (isOrbitSpinning) {
-      orbitAngle += 0.008 * currentSpeedMultiplier;
-    }
-
-    // 1. Cosmic Star Background
-    drawStars(ctx, canvas.width, canvas.height);
-
-    // 2. Orbit Track Rings
-    drawOrbitRing(ctx, centerX, centerY, 150, 'rgba(234, 179, 8, 0.15)', 'Orbit 1: Challenger Track');
-    drawOrbitRing(ctx, centerX, centerY, 270, 'rgba(16, 185, 129, 0.2)', 'Orbit 2: Micro-SaaS Satellites');
-
-    // 3. Orbit 0 Goliath (Sun)
-    const goliathProd = goliaths.length > 0 ? goliaths[0] : { name: 'Incumbent Sun', slug: 'incumbent' };
-    drawGoliathSun(ctx, centerX, centerY, goliathProd.name);
-    renderedCanvasNodes.push({
-      type: 'goliath',
-      x: centerX,
-      y: centerY,
-      radius: 45,
-      data: goliathProd
-    });
-
-    // 4. Orbit 1 Challengers (Planets)
-    challengers.forEach((chal, i) => {
-      const angle = orbitAngle + (i * (2 * Math.PI / Math.max(1, challengers.length)));
-      const x = centerX + Math.cos(angle) * 150;
-      const y = centerY + Math.sin(angle) * 150;
-      drawChallengerPlanet(ctx, x, y, chal.name);
-      renderedCanvasNodes.push({
-        type: 'challenger',
-        x: x,
-        y: y,
-        radius: 25,
-        data: chal
-      });
-    });
-
-    // 5. Orbit 2 Satellites (Moons) with Laser Beams
-    satellites.forEach((sat, i) => {
-      const satAngle = -orbitAngle * 1.5 + (i * (2 * Math.PI / Math.max(1, satellites.length)));
-      const satX = centerX + Math.cos(satAngle) * 270;
-      const satY = centerY + Math.sin(satAngle) * 270;
-
-      // Disruption Laser toward Sun or nearest Challenger
-      if (areLasersActive) {
-        drawDisruptionLaser(ctx, satX, satY, centerX, centerY, 'rgba(56, 189, 248, 0.6)');
-      }
-
-      drawSatelliteNode(ctx, satX, satY, sat.title, sat.osi_score);
-      renderedCanvasNodes.push({
-        type: 'satellite',
-        x: satX,
-        y: satY,
-        radius: 24,
-        data: sat
-      });
-    });
-
-    orbitAnimFrame = requestAnimationFrame(draw);
-  }
-
-  draw();
-}
-
-function drawStars(ctx, w, h) {
-  ctx.fillStyle = '#060B18';
-  ctx.fillRect(0, 0, w, h);
-}
-
-function drawOrbitRing(ctx, cx, cy, radius, strokeStyle, label) {
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.strokeStyle = strokeStyle;
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([4, 6]);
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawGoliathSun(ctx, cx, cy, name) {
-  ctx.save();
-  // Outer glow
-  const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 70);
-  grad.addColorStop(0, 'rgba(239, 68, 68, 0.9)');
-  grad.addColorStop(0.5, 'rgba(239, 68, 68, 0.4)');
-  grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
-
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 70, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Core
-  ctx.fillStyle = '#EF4444';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 32, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Label
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(name, cx, cy + 50);
-  ctx.fillStyle = '#FCA5A5';
-  ctx.font = '10px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('🔴 Orbit 0: Goliath', cx, cy + 64);
-  ctx.restore();
-}
-
-function drawChallengerPlanet(ctx, x, y, name) {
-  ctx.save();
-  // Glow
-  ctx.fillStyle = 'rgba(234, 179, 8, 0.25)';
-  ctx.beginPath();
-  ctx.arc(x, y, 22, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Core
-  ctx.fillStyle = '#EAB308';
-  ctx.beginPath();
-  ctx.arc(x, y, 14, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Label
-  ctx.fillStyle = '#FEF08A';
-  ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(name, x, y + 26);
-  ctx.restore();
-}
-
-function drawSatelliteNode(ctx, x, y, title, osi) {
-  ctx.save();
-  // Glow
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
-  ctx.beginPath();
-  ctx.arc(x, y, 16, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Core
-  ctx.fillStyle = '#10B981';
-  ctx.beginPath();
-  ctx.arc(x, y, 8, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Label
-  const shortTitle = title.length > 22 ? title.substring(0, 20) + '...' : title;
-  ctx.fillStyle = '#A7F3D0';
-  ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(shortTitle, x, y + 22);
-
-  ctx.fillStyle = '#34D399';
-  ctx.font = '9px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(`OSI: ${osi}`, x, y + 33);
-  ctx.restore();
-}
-
-function drawDisruptionLaser(ctx, x1, y1, x2, y2, color) {
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1;
-  ctx.setLineDash([2, 8]);
-  ctx.stroke();
-  ctx.restore();
-}
-
-function toggleOrbitSpin() {
-  isOrbitSpinning = !isOrbitSpinning;
-  const icon = document.getElementById('spin-icon');
-  const btn = document.getElementById('btn-toggle-spin');
-  if (isOrbitSpinning) {
-    icon.innerText = '⏸️';
-    btn.innerHTML = '<span id="spin-icon">⏸️</span> Pause Orbit';
-  } else {
-    icon.innerText = '▶️';
-    btn.innerHTML = '<span id="spin-icon">▶️</span> Resume Orbit';
-  }
-}
-
-function setOrbitSpeed(multiplier) {
-  currentSpeedMultiplier = multiplier;
-  document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
-}
-
-function toggleLasers() {
-  areLasersActive = !areLasersActive;
-  const btn = document.getElementById('btn-toggle-lasers');
-  btn.innerText = areLasersActive ? '⚡ Lasers: ON' : '⚡ Lasers: OFF';
-}
-
-/* ==========================================================================
-   OPPORTUNITY GRID VIEW
-   ========================================================================== */
-async function loadOpportunities() {
-  try {
-    const res = await fetch('/api/opportunities');
-    allOpportunities = await res.json();
-    renderOpportunityCards(allOpportunities);
-  } catch (err) {
-    console.error('Error loading opportunities:', err);
-  }
-}
-
-function populateGridSectorFilter() {
-  const select = document.getElementById('grid-sector-filter');
-  if (!select) return;
-
-  select.innerHTML = `<option value="all">All Root Sectors & Categories (${allOpportunities.length} Ideas)</option>` +
-    categoryHierarchy.map(r => `
-      <option value="${r.slug}">${r.name} (${r.total_opportunity_count || 0} Ideas)</option>
-    `).join('');
-}
-
-function filterOpportunitiesBySector(sectorSlug) {
-  activeSectorFilter = sectorSlug;
-  applyOpportunityFilters();
-}
-
-function filterOpportunities(bucket, btnElement) {
-  activeFilter = bucket;
-  document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
-  if (btnElement) btnElement.classList.add('active');
-  applyOpportunityFilters();
-}
-
-function applyOpportunityFilters() {
-  let filtered = [...allOpportunities];
-
-  if (activeSectorFilter && activeSectorFilter !== 'all') {
-    filtered = filtered.filter(o => o.root_sector_slug === activeSectorFilter || o.category_slug === activeSectorFilter);
-  }
-
-  if (activeFilter && activeFilter !== 'all') {
-    filtered = filtered.filter(o => (o.bucket || '').toLowerCase().includes(activeFilter.toLowerCase()));
-  }
-
-  renderOpportunityCards(filtered);
-}
-
-function renderOpportunityCards(opps) {
-  const container = document.getElementById('opportunities-container');
-  if (!container) return;
-
-  if (opps.length === 0) {
-    container.innerHTML = `
-      <div style="grid-column:1/-1; text-align:center; padding:4rem; color:var(--text-secondary);">
-        <h3>No opportunities found for this filter</h3>
-        <p>Try selecting another sector or run the AI Harvester above to generate ideas.</p>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = opps.map(opp => {
-    const features = Array.isArray(opp.core_features) ? opp.core_features : [];
-    const wedge = opp.unbundling_wedge || opp.value_proposition || 'Targeted unbundling wedge against incumbent complexity';
-    const mrr = opp.target_mrr || opp.mrr_potential || '$15k - $30k/mo';
-    const devDays = opp.dev_timeline_days || (opp.dev_complexity ? opp.dev_complexity * 7 : 14);
-    const persona = opp.target_persona || opp.target_icp_title || 'SMB Founders & Operators';
-
-    return `
-      <div class="opportunity-card" onclick="openOpportunityModal(${opp.id})">
-        <div class="opp-card-header">
-          <div>
-            <span class="sector-tag">${opp.root_sector_name || 'Software Sector'}</span>
-            <h3 class="opp-card-title">${opp.title}</h3>
-          </div>
-          <div class="osi-badge-card">
-            <span class="osi-val">${opp.osi_score}</span>
-            <span class="osi-lbl">OSI Score</span>
-          </div>
-        </div>
-
-        <p class="opp-card-wedge">🎯 <b>Wedge Play:</b> ${wedge}</p>
-
-        <div class="opp-card-metrics">
-          <div class="opp-metric-box">
-            <span class="lbl">Target MRR</span>
-            <span class="val highlight">${mrr}</span>
-          </div>
-          <div class="opp-metric-box">
-            <span class="lbl">Dev Time</span>
-            <span class="val">${devDays} Days</span>
-          </div>
-          <div class="opp-metric-box">
-            <span class="lbl">Target ICP</span>
-            <span class="val">${persona}</span>
-          </div>
-        </div>
-
-        <div class="opp-card-features">
-          <span class="feat-title">Core MVP Unbundling Features:</span>
-          <ul>
-            ${features.slice(0, 3).map(f => `<li>• ${f}</li>`).join('')}
-          </ul>
-        </div>
-
-        <div class="opp-card-footer">
-          <span class="badge-bucket">${opp.bucket || 'Unbundler'}</span>
-          <span class="view-blueprint-btn">Explore Blueprint &rarr;</span>
-        </div>
-      </div>
-    `;
-  }).join('');
 }
 
 /* ==========================================================================
