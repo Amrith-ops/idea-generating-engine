@@ -78,3 +78,51 @@ This document tracks the issues identified in the G2 Micro-SaaS AI Brain Command
 - **Fix Applied**:
   - Updated `loadKeywords()` to query `document.getElementById('fastest-growing-tbody')` and `document.getElementById('highest-volume-tbody')`.
 - **Status**: ✅ **RESOLVED & VERIFIED**
+
+---
+
+### Bug 6: Single-Page Information Dumping & Readability Headache
+- **Severity**: High (UX / Cognitive Load Failure)
+- **Component**: Navigation & Layout Architecture -> `index.html`, `app.js`, `style.css`
+- **Symptoms**:
+  - Agent 2 Dynamic Formulas, Agent 4 Red-Team Audits, Competitor Archetype Clusters, and Micro-SaaS Opportunities were all dumped onto one endless scrolling page under a single tab.
+  - Users experienced cognitive overload and reading fatigue, unable to isolate actionable Micro-SaaS ideas from incumbent lists.
+- **Root Cause**:
+  - Monolithic tab design forcing 4 distinct domain modules into a single `#clusters-view-section` DOM container without dedicated sub-views or quick-filtering controls.
+- **Fix Applied**:
+  1. Re-architected top navigation into **5 dedicated decision tabs**:
+     - `🎯 Micro-SaaS Idea Opportunities` (Primary default decision board)
+     - `🔮 Competitor Archetypes` (Incumbent groups & vulnerability flanks)
+     - `🕸️ Pain Network & Blind Spots` (Interactive 2D graph)
+     - `📊 Search Demand & Keywords` (Google SEO demand)
+     - `🛡️ Agent Strategy & Audit` (Agent 2 physics formulas & Agent 4 verbatim audit)
+  2. Built high-contrast **Filter Toolbars** with instant client-side filtering (`All Ideas`, `Top OSI 9.0+`, `Rapid Build ≤14d`, `High ACV $49+/mo`) and live search inputs.
+  3. Formatted opportunity cards with top KPI badges, highlighted Unbundling Wedge callouts, 2-column Target ICP vs Incumbents specs, 2-column MVP feature checklist pills, and live Google SEO tags.
+- **Status**: ✅ **RESOLVED & VERIFIED**
+
+---
+
+### Bug 7: Overly Technical Jargon in Competitor Archetype Descriptions
+- **Severity**: Medium (Clarity & Cognitive Accessibility Failure)
+- **Component**: Competitor Archetype Engine & Dashboard Rendering -> [`competitor_clustering_engine.py`](file:///c:/ideas_brain/pipeline/competitor_clustering_engine.py), [`db_client.py`](file:///c:/ideas_brain/pipeline/db_client.py), [`app.js`](file:///c:/ideas_brain/dashboard/static/app.js), [`style.css`](file:///c:/ideas_brain/dashboard/static/style.css)
+- **Symptoms**:
+  - Descriptions in the Competitor Archetype cards used dense enterprise jargon and PR buzzwords like *"Powerhouse case management platforms that trade setup velocity and cost for deep customization, high scalability, and exhaustive relational data tracking."*
+  - Non-technical users could not visualize what the software actually does, how someone uses it on a normal workday, or why users get frustrated.
+- **Root Cause**:
+  - LLM prompts and fallback templates were prompting for high-level academic market summaries rather than everyday mental models, analogies, and concrete step-by-step user workflows.
+- **Fix Applied**:
+  1. **Schema & Backend Upgrade**:
+     - Added `how_it_works` JSONB column to `competitor_clusters` table.
+     - Upgraded Gemini prompt in [`competitor_clustering_engine.py`](file:///c:/ideas_brain/pipeline/competitor_clustering_engine.py) to explicitly require `plain_english_summary`, `analogy` (everyday mental model), `workflow_example` (step-by-step daily scenario), `the_catch` (hidden frustration), and `microsaas_opportunity`.
+     - Created and executed [`pipeline/enrich_all_clusters.py`](file:///c:/ideas_brain/pipeline/enrich_all_clusters.py) to enrich all existing competitor clusters across PostgreSQL with plain-English analogies and workflows.
+  2. **UI Card Redesign**:
+     - Upgraded `renderClusters` in [`dashboard/static/app.js`](file:///c:/ideas_brain/dashboard/static/app.js) with `getPlainEnglishClusterBreakdown(c)`.
+     - Built dedicated visual blocks:
+       - 💡 **Everyday Mental Model Analogy** (e.g. *"🛫 Like a Boeing 747 airplane cockpit: Built for giant airlines with thousands of dials and controls—handles massive scale, but takes months of training and a manual to operate."*)
+       - 🔄 **Real-World Daily Workflow Steps** (Numbered step-by-step scenario of an employee using the tool from customer message to resolution).
+       - ⚠️ **The Hidden Catch / Fatal Trade-off** (Plain explanation of why users get frustrated).
+       - 🚀 **Founder Micro-SaaS Opportunity** (Actionable opening for a lightweight 1-click tool).
+     - Added styling in [`dashboard/static/style.css`](file:///c:/ideas_brain/dashboard/static/style.css).
+- **Status**: ✅ **RESOLVED & VERIFIED**
+
+

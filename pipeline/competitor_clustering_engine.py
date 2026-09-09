@@ -237,23 +237,37 @@ Return valid JSON with key "products" as an array of objects.
             })
 
         prompt = f"""
-You are a strategic SaaS positioning expert.
+You are a strategic SaaS market research analyst and master communicator who explains complex software systems in simple, everyday English.
 Given these {len(prod_summaries)} products in the category '{category_name}':
 {json.dumps(prod_summaries, indent=2)}
 
-Group these products into 2 to 3 distinct strategic COMPETITOR CLUSTERS based on:
-1. Feature set archetype (e.g. Enterprise All-in-One Suites vs Niche Vertical Tools vs Lightweight Dev Inboxes)
-2. Target market & pricing tier (Enterprise vs DTC vs SMB)
-3. Shared architectural vulnerabilities
+Group these products into 2 to 3 distinct strategic COMPETITOR ARCHETYPE GROUPS based on:
+1. Feature set archetype (e.g. Enterprise All-in-One Suites vs Modern Automated Messengers vs Lightweight Team Inboxes)
+2. Target market & pricing tier (Enterprise vs Mid-Market / E-Commerce vs Small Business)
+3. Shared architectural weaknesses & real-world customer frustrations
+
+CRITICAL INSTRUCTION FOR CLARITY:
+Avoid all corporate buzzwords and technical jargon (do NOT use vague phrases like "exhaustive relational data tracking", "powerhouse case management", "trade setup velocity", "omnichannel lifecycle engines", or "pricing cliffs").
+Explain everything so simply that someone with zero software background can immediately visualize what the software does, how someone uses it on a normal workday, and why customers get frustrated.
 
 For EACH cluster provide:
-- "cluster_slug": URL slug (e.g. "enterprise-heavyweights", "ecommerce-dtc-specialists", "lightweight-shared-inboxes")
-- "cluster_name": Clear human title (e.g. "Enterprise Behemoth Suites", "E-Commerce & DTC Inboxes", "Lightweight Dev & Flat-Rate Inboxes")
-- "cluster_theme": 1-sentence strategic summary of how this group positions itself
+- "cluster_slug": URL slug (e.g. "enterprise-heavyweights", "modern-chat-automation", "simple-team-inbox")
+- "cluster_name": Clear, human title (e.g. "Enterprise All-in-One Giants", "Modern Website Chat & Automation", "Simple Shared Inboxes for Small Teams")
+- "cluster_theme": 1-2 plain-English sentences summarizing what this software does in simple everyday words
 - "target_tier": "Enterprise", "Mid-Market", or "Small Business"
 - "product_slugs": Array of product slugs belonging to this cluster
-- "common_pain_points": Array of 2-3 specific pain points shared by this entire cluster
-- "unaddressed_gaps": Array of 2-3 feature/pricing needs that this cluster FAILS to solve or deliberately ignores
+- "common_pain_points": Array of 2-3 specific, plain-English pain points shared by this entire cluster
+- "unaddressed_gaps": Array of 2-3 feature/pricing needs that this cluster fails to solve or ignores
+- "how_it_works": Object with:
+    * "plain_english_summary": "1-2 sentences in simple human English explaining what this software does."
+    * "analogy": "An everyday real-world analogy (e.g. '🛫 Like an airplane cockpit: Built for giant airlines with thousands of dials, but takes 6 months of training to use.' or '💬 Like WhatsApp with smart automated replies for online stores.')"
+    * "workflow_example": [
+        "Step 1: A customer sends a support message or order question.",
+        "Step 2: The system tags the message and assigns it to a team queue.",
+        "Step 3: An agent opens multiple screens to check customer history and send a reply."
+      ]
+    * "the_catch": "1 sentence on why users feel overwhelmed or frustrated (the hidden trade-off)."
+    * "microsaas_opportunity": "1 sentence on the exact focused, 1-click tool you can build to beat them."
 
 Return valid JSON with key "clusters" containing the array of cluster objects.
 """
@@ -290,21 +304,59 @@ Return valid JSON with key "clusters" containing the array of cluster objects.
             clusters = [
                 {
                     "cluster_slug": f"enterprise-heavyweights-{category_slug}",
-                    "cluster_name": f"Enterprise All-in-One {category_name} Suites",
-                    "cluster_theme": "High-customization, complex enterprise platforms with steep learning curves and heavy per-seat tiers.",
+                    "cluster_name": f"Enterprise All-in-One {category_name} Giants",
+                    "cluster_theme": "Massive, all-in-one software suites built for corporations with thousands of staff, packed with hundreds of settings and compliance controls.",
                     "target_tier": "Enterprise",
                     "product_slugs": ent_prods,
-                    "common_pain_points": ["Rigid multi-week onboarding", "Punitive per-agent pricing tiers", "Bloated navigation and slow load times"],
-                    "unaddressed_gaps": ["Lightweight flat-rate pricing", "Zero-config fast setup for 1-5 person teams", "Simple clean UI without enterprise modules"]
+                    "common_pain_points": [
+                        "Takes 3 to 6 months of IT setup and expensive consultants before your team can even use it",
+                        "Punitive per-seat pricing ($150+/user/month) that penalizes team growth",
+                        "Cluttered, slow user interface with dozens of menus that slow down everyday work"
+                    ],
+                    "unaddressed_gaps": [
+                        "Zero-config setup ready in under 5 minutes for small teams",
+                        "Predictable flat-rate pricing with unlimited team seats",
+                        "Clean, single-screen UI focused on doing one job fast"
+                    ],
+                    "how_it_works": {
+                        "plain_english_summary": "Heavy-duty software built for giant corporations to log, track, and manage complex customer interactions across dozens of global departments.",
+                        "analogy": "🛫 Like a commercial airplane cockpit: It can track thousands of flights at once and has a switch for everything, but requires certified pilots, months of training, and a manual to operate.",
+                        "workflow_example": [
+                            "Step 1: A customer emails with an issue. The system generates Ticket #9482, assigns an SLA timer, and routes it through 10 corporate approval rules.",
+                            "Step 2: An agent opens 4 different browser tabs to look up account details and check compliance checklists.",
+                            "Step 3: The agent fills out 8 required fields just to write and send a 2-sentence response."
+                        ],
+                        "the_catch": "Because it tries to please corporate executives and IT auditors, everyday employees spend more time navigating menus than solving customer problems.",
+                        "microsaas_opportunity": "Build a fast, 1-click micro-tool that lets teams resolve this exact workflow in 10 seconds without any enterprise bloat."
+                    }
                 },
                 {
                     "cluster_slug": f"modern-specialists-{category_slug}",
-                    "cluster_name": f"Modern & Specialized {category_name} Platforms",
-                    "cluster_theme": "Sleek, workflow-focused solutions that still suffer from steep add-on costs or limited native integrations.",
+                    "cluster_name": f"Modern Automated & Conversational Platforms",
+                    "cluster_theme": "Sleek, real-time messaging and automation tools built to chat with website visitors and resolve questions instantly.",
                     "target_tier": "Mid-Market",
                     "product_slugs": mid_prods + smb_prods,
-                    "common_pain_points": ["Aggressive usage overage pricing", "Fragmented analytics across channels", "Complex custom webhook configurations"],
-                    "unaddressed_gaps": ["Self-hosted / privacy-first options", "Transparent unlimited usage model", "Native lightweight API bridges"]
+                    "common_pain_points": [
+                        "Unpredictable usage fees and surprise overage charges at the end of each month",
+                        "Fragmented customer data across multiple disconnected tools",
+                        "Complicated bot builders that break when customers ask unexpected questions"
+                    ],
+                    "unaddressed_gaps": [
+                        "Transparent, predictable billing with zero surprise usage spikes",
+                        "Privacy-first data storage with simple 1-click export",
+                        "Lightweight, no-code integrations that connect in 60 seconds"
+                    ],
+                    "how_it_works": {
+                        "plain_english_summary": "Website chat bubbles and automated bots designed to engage shoppers in real time, answer common FAQs, and hand off chats to support staff.",
+                        "analogy": "💬 Like WhatsApp or iMessage on steroids for online businesses: When visitors land on your site, an automated assistant greets them and helps them find answers instantly.",
+                        "workflow_example": [
+                            "Step 1: A shopper visits a website and clicks the chat widget asking 'How do I return my item?'.",
+                            "Step 2: An automated bot checks store policies and suggests the return portal link within 3 seconds.",
+                            "Step 3: If the customer needs a human, the chat notifies a support rep on Slack or mobile to take over."
+                        ],
+                        "the_catch": "As soon as your website traffic grows, usage-based fees can cause your monthly bill to jump from $100 to over $1,500 without warning.",
+                        "microsaas_opportunity": "Offer a simple, fixed-fee tool with transparent pricing and foolproof automation that never surprises users on their invoice."
+                    }
                 }
             ]
 
@@ -314,19 +366,27 @@ Return valid JSON with key "clusters" containing the array of cluster objects.
             cl["cluster_slug"] = cl_slug
             cl["category_slug"] = category_slug
 
+            how_it_works_data = cl.get("how_it_works", {})
+            if isinstance(how_it_works_data, str):
+                try:
+                    how_it_works_data = json.loads(how_it_works_data)
+                except Exception:
+                    how_it_works_data = {}
+
             insert_sql = """
             INSERT INTO competitor_clusters (
                 cluster_slug, category_slug, cluster_name, cluster_theme,
-                target_tier, product_slugs, common_pains, unaddressed_gaps
+                target_tier, product_slugs, common_pains, unaddressed_gaps, how_it_works
             )
             VALUES (%(cluster_slug)s, %(category_slug)s, %(cluster_name)s, %(cluster_theme)s,
-                    %(target_tier)s, %(product_slugs)s, %(common_pains)s, %(unaddressed_gaps)s)
+                    %(target_tier)s, %(product_slugs)s, %(common_pains)s, %(unaddressed_gaps)s, %(how_it_works)s)
             ON CONFLICT (cluster_slug) DO UPDATE
             SET cluster_name = EXCLUDED.cluster_name,
                 cluster_theme = EXCLUDED.cluster_theme,
                 product_slugs = EXCLUDED.product_slugs,
                 common_pains = EXCLUDED.common_pains,
-                unaddressed_gaps = EXCLUDED.unaddressed_gaps;
+                unaddressed_gaps = EXCLUDED.unaddressed_gaps,
+                how_it_works = EXCLUDED.how_it_works;
             """
             self.db.execute_query(insert_sql, {
                 "cluster_slug": cl_slug,
@@ -336,7 +396,8 @@ Return valid JSON with key "clusters" containing the array of cluster objects.
                 "target_tier": cl.get("target_tier", "Mid-Market"),
                 "product_slugs": cl.get("product_slugs", []),
                 "common_pains": json.dumps(cl.get("common_pain_points", cl.get("common_pains", []))),
-                "unaddressed_gaps": json.dumps(cl.get("unaddressed_gaps", []))
+                "unaddressed_gaps": json.dumps(cl.get("unaddressed_gaps", [])),
+                "how_it_works": json.dumps(how_it_works_data)
             })
 
             # Update products with cluster info

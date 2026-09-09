@@ -101,23 +101,33 @@
       </div>
     </section>
 
-    <!-- 3-PILLAR DECISION NAVIGATION TABS -->
+    <!-- 5-PILLAR DECISION NAVIGATION TABS -->
     <nav class="view-nav-bar">
       <div class="view-tabs">
-        <button class="view-tab-btn active" id="tab-btn-clusters" onclick="switchMainView('clusters')">
-          <span class="tab-icon">🔮</span>
-          <span class="tab-label">Competitor Clusters & White Space Matrix</span>
+        <button class="view-tab-btn active" id="tab-btn-whitespace" onclick="switchMainView('whitespace')">
+          <span class="tab-icon">🎯</span>
+          <span class="tab-label">Micro-SaaS Idea Opportunities</span>
           <span class="tab-badge purple" id="whitespace-count-badge">White Space Matrix</span>
+        </button>
+        <button class="view-tab-btn" id="tab-btn-clusters" onclick="switchMainView('clusters')">
+          <span class="tab-icon">🔮</span>
+          <span class="tab-label">Competitor Landscape</span>
+          <span class="tab-badge cyan" id="cluster-count-badge">Existing Big Players</span>
         </button>
         <button class="view-tab-btn" id="tab-btn-paingraph" onclick="switchMainView('paingraph')">
           <span class="tab-icon">🕸️</span>
-          <span class="tab-label">Pain Network & Omission Matrix</span>
-          <span class="tab-badge rose" id="paingraph-count-badge">Systemic Blind Spots</span>
+          <span class="tab-label">Pain Network & Blind Spots</span>
+          <span class="tab-badge rose" id="paingraph-count-badge">Systemic Graph</span>
         </button>
         <button class="view-tab-btn" id="tab-btn-keywords" onclick="switchMainView('keywords')">
           <span class="tab-icon">📊</span>
-          <span class="tab-label">Search Volume & Keyword Demand</span>
+          <span class="tab-label">Search Demand & Keywords</span>
           <span class="tab-badge emerald">Google Grounded</span>
+        </button>
+        <button class="view-tab-btn" id="tab-btn-strategy" onclick="switchMainView('strategy')">
+          <span class="tab-icon">🛡️</span>
+          <span class="tab-label">Agent Strategy & Audit</span>
+          <span class="tab-badge purple">Anti-Hallucination</span>
         </button>
       </div>
       <div class="view-nav-stats">
@@ -126,23 +136,84 @@
       </div>
     </nav>
 
-    <!-- 1. COMPETITOR CLUSTERS & WHITE SPACE MATRIX VIEW (DEFAULT) -->
-    <section id="clusters-view-section" class="clusters-view-section">
-      <div class="keyword-header-card" style="border-color: rgba(168,85,247,0.3); background: linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+    <!-- 1. MICRO-SAAS IDEA OPPORTUNITIES VIEW (PRIMARY DECISION COCKPIT) -->
+    <section id="whitespace-view-section" class="whitespace-view-section">
+      <div class="keyword-header-card" style="border-color: rgba(16,185,129,0.3); background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(15,23,42,0.85) 100%);">
         <div class="kw-header-info">
-          <h3>🔮 Multi-Signal Competitor Clustering & White Space Engine</h3>
-          <p>Clusters competitors using <b>Feature Matrices, ICP Alignment, and Google Search Graphs</b> to identify <b>Systemic Pain Omissions</b> left unaddressed across all incumbent groups.</p>
+          <h3>🎯 Validated Micro-SaaS Opportunities</h3>
+          <p>Profitable software ideas discovered by finding <b>unmet needs across existing software</b> and verified with <b>real Google buyer searches</b>.</p>
         </div>
         <div class="kw-stat-badges">
-          <button class="btn-primary" onclick="triggerClusterAndMine()" id="btn-recluster" style="background:linear-gradient(135deg, #A855F7 0%, #7C3AED 100%); color:#FFF;">
-            <span id="btn-recluster-text">⚡ Re-Cluster & Discover White Spaces</span>
+          <button class="btn-primary" onclick="triggerClusterAndMine()" id="btn-recluster" style="background:linear-gradient(135deg, #10B981 0%, #059669 100%); color:#FFF;">
+            <span id="btn-recluster-text">⚡ Re-Mine White Spaces</span>
             <div id="btn-recluster-spinner" class="spinner hidden" style="border-top-color:#FFF;"></div>
           </button>
         </div>
       </div>
 
-      <!-- SECTION 0: STRATEGIC INTELLIGENCE HUB (AGENT 2 WEIGHT RATIONALE & AGENT 4 RED-TEAM AUDIT) -->
-      <div id="strategic-intelligence-hub" class="strategic-hub-deck">
+      <!-- FILTER & SEARCH TOOLBAR -->
+      <div class="filter-toolbar">
+        <div class="filter-btn-group">
+          <span class="filter-label">Quick Filters:</span>
+          <button class="filter-pill active" id="ws-flt-all" onclick="filterWhitespaceOpportunities('all')">🔥 All Ideas (<span id="ws-count-all">0</span>)</button>
+          <button class="filter-pill" id="ws-flt-high-osi" onclick="filterWhitespaceOpportunities('high-osi')">⭐ Top ROI Score (9.0+)</button>
+          <button class="filter-pill" id="ws-flt-rapid" onclick="filterWhitespaceOpportunities('rapid')">⚡ Fast Build (≤14 Days)</button>
+          <button class="filter-pill" id="ws-flt-high-acv" onclick="filterWhitespaceOpportunities('high-acv')">💰 Higher Price ($49+/mo)</button>
+        </div>
+        <div class="filter-search-wrap">
+          <input type="text" id="ws-search-input" class="filter-search-input" placeholder="🔍 Filter ideas by problem, feature, or audience..." oninput="searchWhitespaceOpportunities(this.value)">
+        </div>
+      </div>
+
+      <div class="whitespace-grid" id="whitespace-container">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- 2. COMPETITOR ARCHETYPE CLUSTERS VIEW -->
+    <section id="clusters-view-section" class="clusters-view-section hidden">
+      <div class="keyword-header-card" style="border-color: rgba(168,85,247,0.3); background: linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+        <div class="kw-header-info">
+          <h3>🔮 Existing Competitor Groups & Market Weaknesses</h3>
+          <p>Competitors grouped by <b>Feature Sets, Target Customers, and Pricing Models</b> to show you exactly why users leave them.</p>
+        </div>
+        <div class="kw-stat-badges">
+          <div class="kw-badge"><span class="kw-badge-num" id="cluster-archetype-count">--</span> Groups Found</div>
+        </div>
+      </div>
+
+      <!-- CLUSTERS FILTER & SEARCH TOOLBAR -->
+      <div class="filter-toolbar">
+        <div class="filter-btn-group">
+          <span class="filter-label">Filter:</span>
+          <button class="filter-pill active" id="cl-flt-all" onclick="filterCompetitorClusters('all')">All Groups</button>
+          <button class="filter-pill" id="cl-flt-enterprise" onclick="filterCompetitorClusters('enterprise')">🏢 Giant Enterprise Suites</button>
+          <button class="filter-pill" id="cl-flt-midmarket" onclick="filterCompetitorClusters('midmarket')">⚡ Modern / Mid-Market Tools</button>
+          <button class="filter-pill" id="cl-flt-smb" onclick="filterCompetitorClusters('smb')">🌱 Budget / Small Business Tools</button>
+        </div>
+        <div class="filter-search-wrap">
+          <input type="text" id="cl-search-input" class="filter-search-input" placeholder="🔍 Search competitor group or software..." oninput="searchCompetitorClusters(this.value)">
+        </div>
+      </div>
+
+      <div class="clusters-grid" id="clusters-container">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- 3. STRATEGIC INTELLIGENCE HUB & RED-TEAM AUDIT VIEW -->
+    <section id="strategy-view-section" class="strategy-view-section hidden">
+      <div class="keyword-header-card" style="border-color: rgba(56,189,248,0.3); background: linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+        <div class="kw-header-info">
+          <h3>🛡️ Multi-Agent Intelligence Strategy & Red-Team Gate</h3>
+          <p>Inspect <b>Agent 2 Domain Physics & Weight Calculations</b> and <b>Agent 4 Red-Team Anti-Hallucination Verification</b>.</p>
+        </div>
+        <div class="kw-stat-badges">
+          <div class="kw-badge green"><span class="kw-badge-num">100%</span> Grounded Verbatim</div>
+        </div>
+      </div>
+
+      <div id="strategic-intelligence-hub" class="strategic-hub-deck" style="margin-bottom:0;">
         <!-- CARD 1: DYNAMIC CATEGORY WEIGHT STRATEGY -->
         <div class="strategic-card weight-strategy-card" id="card-weight-strategy">
           <div class="strategic-card-header">
@@ -178,24 +249,6 @@
             <!-- Populated by JS -->
           </div>
         </div>
-      </div>
-
-      <!-- SECTION 1: ARCHETYPE COMPETITOR CLUSTERS -->
-      <div class="section-title-bar">
-        <h3>1. Multi-Signal Competitor Archetype Clusters</h3>
-        <p>Incumbents grouped by feature profiles, buyer personas, market tier, and search graph distance.</p>
-      </div>
-      <div class="clusters-grid" id="clusters-container">
-        <!-- Populated by JS -->
-      </div>
-
-      <!-- SECTION 2: HIGH-CONVICTION WHITE SPACE MICRO-SAAS OPPORTUNITIES -->
-      <div class="section-title-bar" style="margin-top:2rem;">
-        <h3>2. Validated White Space Micro-SaaS Opportunities</h3>
-        <p>Synthesized by identifying unaddressed omissions across all incumbent clusters and verified with Google SEO demand.</p>
-      </div>
-      <div class="whitespace-grid" id="whitespace-container">
-        <!-- Populated by JS -->
       </div>
     </section>
 

@@ -156,18 +156,19 @@ class DatabaseClient:
         sql = """
         INSERT INTO competitor_clusters (
             cluster_slug, category_slug, cluster_name, cluster_theme,
-            target_tier, product_slugs, common_pains, unaddressed_gaps
+            target_tier, product_slugs, common_pains, unaddressed_gaps, how_it_works
         )
         VALUES (
             %(cluster_slug)s, %(category_slug)s, %(cluster_name)s, %(cluster_theme)s,
-            %(target_tier)s, %(product_slugs)s, %(common_pains)s, %(unaddressed_gaps)s
+            %(target_tier)s, %(product_slugs)s, %(common_pains)s, %(unaddressed_gaps)s, %(how_it_works)s
         )
         ON CONFLICT (cluster_slug) DO UPDATE
         SET cluster_name = EXCLUDED.cluster_name,
             cluster_theme = EXCLUDED.cluster_theme,
             product_slugs = EXCLUDED.product_slugs,
             common_pains = EXCLUDED.common_pains,
-            unaddressed_gaps = EXCLUDED.unaddressed_gaps;
+            unaddressed_gaps = EXCLUDED.unaddressed_gaps,
+            how_it_works = EXCLUDED.how_it_works;
         """
         payload = {
             "cluster_slug": cluster_data.get("cluster_slug"),
@@ -177,7 +178,8 @@ class DatabaseClient:
             "target_tier": cluster_data.get("target_tier", "Mid-Market"),
             "product_slugs": cluster_data.get("product_slugs", []),
             "common_pains": json.dumps(cluster_data.get("common_pains", [])),
-            "unaddressed_gaps": json.dumps(cluster_data.get("unaddressed_gaps", []))
+            "unaddressed_gaps": json.dumps(cluster_data.get("unaddressed_gaps", [])),
+            "how_it_works": json.dumps(cluster_data.get("how_it_works", {}))
         }
         with self.get_connection() as conn:
             with conn.cursor() as cur:
@@ -202,6 +204,13 @@ class DatabaseClient:
                     c["unaddressed_gaps"] = json.loads(c["unaddressed_gaps"])
                 except Exception:
                     c["unaddressed_gaps"] = []
+            if isinstance(c.get("how_it_works"), str):
+                try:
+                    c["how_it_works"] = json.loads(c["how_it_works"])
+                except Exception:
+                    c["how_it_works"] = {}
+            elif not c.get("how_it_works"):
+                c["how_it_works"] = {}
         return clusters
 
     def insert_whitespace_opportunity(self, ws_data: Dict[str, Any]):

@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS competitor_clusters (
     product_slugs TEXT[] DEFAULT '{}',
     common_pains JSONB DEFAULT '[]'::jsonb,
     unaddressed_gaps JSONB DEFAULT '[]'::jsonb,
+    how_it_works JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
